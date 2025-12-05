@@ -7,7 +7,8 @@ from PyQt5.QtWidgets import (
     QWidget,
     QLabel,
     QStyleFactory,
-    QDesktopWidget
+    QDesktopWidget,
+    QScrollArea
 )
 from PyQt5.QtGui import QFont
 from PyQt5.QtCore import Qt
@@ -33,10 +34,10 @@ QWidget {
 QLabel#HeaderLabel {
     background-color: #107c41; /* Excel Green Brand Color */
     color: #ffffff;
-    font-size: 24px;
+    font-size: 20px;
     font-weight: 600;
-    padding: 18px 30px;
-    border-bottom: 4px solid #0c5c30; /* Darker accent border */
+    padding: 12px 20px;
+    border-bottom: 3px solid #0c5c30; /* Darker accent border */
 }
 
 /* Tab Widget Styling - Card Look */
@@ -210,9 +211,9 @@ class DesktopSuiteApp(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("CA Firm Office Suite - Desktop")
-        self.resize(800, 600)  # Reduced size for better laptop compatibility
 
-        self.center_window()
+        # Set initial window size that fits laptop screens and allows maximizing
+        self.resize(1050, 650)
 
         # Setup Theme
         QApplication.setStyle(QStyleFactory.create("Fusion"))
@@ -220,12 +221,15 @@ class DesktopSuiteApp(QMainWindow):
 
         self.setup_ui()
 
+        # Center window AFTER setting up UI
+        self.center_window()
+
     def center_window(self):
-        # Center the window on the screen
-        screen = QDesktopWidget().screenGeometry()
-        size = self.geometry()
-        self.move((screen.width() - size.width()) // 2,
-                  (screen.height() - size.height()) // 2)
+        """Center the window on the screen"""
+        frame_geometry = self.frameGeometry()
+        screen_center = QDesktopWidget().availableGeometry().center()
+        frame_geometry.moveCenter(screen_center)
+        self.move(frame_geometry.topLeft())
 
     def setup_ui(self):
         # Main Layout
@@ -251,14 +255,27 @@ class DesktopSuiteApp(QMainWindow):
         # Ensure tabs fill the space
         self.tabs.setDocumentMode(False)
 
-        # Add Tools as Tabs
+        # Add Tools as Tabs with scroll areas
         self.pdf_tool = PDFTableExtractor()
         self.formatter_tool = ExcelCleanerWindow()
         self.merge_split_tool = ExcelMergeSplitWindow()
 
-        self.tabs.addTab(self.pdf_tool, "PDF to Excel")
-        self.tabs.addTab(self.formatter_tool, "Excel Formatter")
-        self.tabs.addTab(self.merge_split_tool, "Merge & Split")
+        # Wrap each tool in a scroll area to handle overflow
+        pdf_scroll = QScrollArea()
+        pdf_scroll.setWidget(self.pdf_tool)
+        pdf_scroll.setWidgetResizable(True)
+
+        formatter_scroll = QScrollArea()
+        formatter_scroll.setWidget(self.formatter_tool)
+        formatter_scroll.setWidgetResizable(True)
+
+        merge_scroll = QScrollArea()
+        merge_scroll.setWidget(self.merge_split_tool)
+        merge_scroll.setWidgetResizable(True)
+
+        self.tabs.addTab(pdf_scroll, "PDF to Excel")
+        self.tabs.addTab(formatter_scroll, "Excel Formatter")
+        self.tabs.addTab(merge_scroll, "Merge & Split")
 
         content_layout.addWidget(self.tabs)
         layout.addWidget(content_container)
