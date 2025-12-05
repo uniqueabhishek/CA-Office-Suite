@@ -6,7 +6,6 @@ import pandas as pd
 from PyQt5 import QtWidgets
 from PyQt5.QtWidgets import (
     QApplication,
-    QMainWindow,
     QWidget,
     QFileDialog,
     QMessageBox,
@@ -16,9 +15,7 @@ from PyQt5.QtWidgets import (
     QPushButton,
     QListWidget,
     QCheckBox,
-    QComboBox,
     QProgressBar,
-    QRadioButton,
     QTextEdit,
     QGroupBox,
 )
@@ -29,6 +26,7 @@ from openpyxl.utils import get_column_letter
 from openpyxl.styles import Font, PatternFill, Border, Side, Alignment
 
 SUPPORTED_EXTENSIONS = (".xlsx", ".xls", ".csv")
+
 
 # ---------- Utility functions ----------
 def list_excel_files_in_folder(folder):
@@ -41,6 +39,7 @@ def list_excel_files_in_folder(folder):
             if f.lower().endswith(SUPPORTED_EXTENSIONS):
                 out.append(os.path.join(root, f))
     return out
+
 
 def read_file_to_df(path):
     """
@@ -58,6 +57,7 @@ def read_file_to_df(path):
                 path, sheet_name=0, engine="xlrd", dtype=str, keep_default_na=False
             )
 
+
 def read_all_sheets(path):
     """
     Reads all sheets from a supported file into a dictionary of DataFrames.
@@ -68,6 +68,7 @@ def read_all_sheets(path):
         return {"Sheet1": pd.read_csv(path, dtype=str, keep_default_na=False)}
     else:
         return pd.read_excel(path, sheet_name=None, dtype=str, keep_default_na=False)
+
 
 def save_df_to_excel(
     df, path, sheet_name="Sheet1", number_format_map=None, apply_theme=False
@@ -110,7 +111,7 @@ def save_df_to_excel(
             try:
                 val = cell.value
                 length = len(str(val)) if val is not None else 0
-            except:
+            except Exception:
                 length = 0
             if length > max_len:
                 max_len = length
@@ -120,6 +121,7 @@ def save_df_to_excel(
     if output_directory and not os.path.exists(output_directory):
         os.makedirs(output_directory)
     wb.save(path)
+
 
 def apply_openpyxl_autofit_and_theme(
     path, sheet_name=None, number_format_map=None, apply_theme=False
@@ -138,40 +140,49 @@ def apply_openpyxl_autofit_and_theme(
 
     thin = Side(border_style="thin", color="000000")
     for ws in ws_list:
-        if ws is None: continue
+        if ws is None:
+            continue
         if ws.max_row >= 1:
             for cell in ws[1]:
                 cell.font = Font(bold=True)
                 cell.fill = PatternFill("solid", fgColor="DDDDDD")
-                cell.alignment = Alignment(horizontal="center", vertical="center")
-                cell.border = Border(left=thin, right=thin, top=thin, bottom=thin)
+                cell.alignment = Alignment(
+                    horizontal="center", vertical="center")
+                cell.border = Border(left=thin, right=thin,
+                                     top=thin, bottom=thin)
 
         for col in ws.columns:
             max_len = 0
-            col_letter = get_column_letter(col[0].column)
+            col_index = col[0].column
+            if col_index is None or not isinstance(col_index, int):
+                continue
+            col_letter = get_column_letter(col_index)
             for cell in col:
                 try:
                     val = cell.value
                     length = len(str(val)) if val is not None else 0
-                except:
+                except Exception:
                     length = 0
                 if length > max_len:
                     max_len = length
-            ws.column_dimensions[col_letter].width = min(max(50, max_len + 2), 100)
+            ws.column_dimensions[col_letter].width = min(
+                max(50, max_len + 2), 100)
 
     if apply_theme:
         pass
     wb.save(path)
+
 
 # ---------- GUI ----------
 class ExcelMergeSplitWindow(QWidget):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Excel Merge/Split Tool")
-        self.resize(800, 600)
+        # self.resize(800, 600)
         self.selected_files = []
         self.output_folder = None
-        self.overwrite_originals = False # Not used for Merge/Split mostly, but good for Split
+        # Not used for Merge/Split mostly, but good for Split
+        self.overwrite_originals = False
 
         self._build_ui()
 
@@ -291,7 +302,8 @@ class ExcelMergeSplitWindow(QWidget):
         self.log("Cleared file list.")
 
     def select_output_folder(self):
-        folder = QFileDialog.getExistingDirectory(self, "Select output folder", "")
+        folder = QFileDialog.getExistingDirectory(
+            self, "Select output folder", "")
         if folder:
             self.output_folder = folder
             self.out_folder_label.setText(f"Output folder: {folder}")
@@ -303,14 +315,24 @@ class ExcelMergeSplitWindow(QWidget):
             return
 
         if not self.chk_merge.isChecked() and not self.chk_split.isChecked():
-            QMessageBox.warning(self, "No operation", "Please select Merge or Split operation.")
+            QMessageBox.warning(
+                self, "No operation",
+                "Please select Merge or Split operation.")
             return
 
         if not self.output_folder:
-             QMessageBox.warning(self, "No Output Folder", "Please select an output folder.")
-             return
+            QMessageBox.warning(
+                self, "No Output Folder",
+                "Please select an output folder.")
+            return
 
-        files = [self.file_list_widget.item(i).text() for i in range(self.file_list_widget.count())]
+        files = []
+        for i in range(self.file_list_widget.count()):
+            item = self.file_list_widget.item(i)
+            if item is not None:
+                text = item.text()
+                if text:
+                    files.append(text)
 
         # Merge Logic
         if self.chk_merge.isChecked():
@@ -332,7 +354,8 @@ class ExcelMergeSplitWindow(QWidget):
                 self.log(f"Splitting: {file_path}")
                 try:
                     sheets = read_all_sheets(file_path)
-                    base_name = os.path.splitext(os.path.basename(file_path))[0]
+                    base_name = os.path.splitext(
+                        os.path.basename(file_path))[0]
                     for sheetname, df in sheets.items():
                         out_name = f"{base_name}__{sheetname[:20]}.xlsx"
                         out_path = os.path.join(self.output_folder, out_name)
@@ -355,7 +378,8 @@ class ExcelMergeSplitWindow(QWidget):
         for f in files:
             try:
                 sheets = read_all_sheets(f)
-                if not sheets: continue
+                if not sheets:
+                    continue
                 # prefer first sheet for column comparison
                 first_sheet_name = list(sheets.keys())[0]
                 df = sheets[first_sheet_name]
@@ -372,7 +396,8 @@ class ExcelMergeSplitWindow(QWidget):
         else:
             # create workbook with each file as sheet
             wb = Workbook()
-            wb.remove(wb.active)
+            if wb.active is not None:
+                wb.remove(wb.active)
             for f, sheets in sheetmaps.items():
                 short = os.path.splitext(os.path.basename(f))[0][:25]
                 for sheetname, df in sheets.items():
@@ -391,11 +416,13 @@ class ExcelMergeSplitWindow(QWidget):
         cursor = self.log_text.textCursor()
         self.log_text.moveCursor(cursor.End)
 
+
 def main():
     app = QApplication(sys.argv)
     w = ExcelMergeSplitWindow()
     w.show()
     sys.exit(app.exec_())
+
 
 if __name__ == "__main__":
     main()

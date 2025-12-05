@@ -9,7 +9,6 @@ from PyQt5 import QtWidgets
 
 from PyQt5.QtWidgets import (
     QApplication,
-    QMainWindow,
     QWidget,
     QFileDialog,
     QMessageBox,
@@ -144,7 +143,7 @@ def save_df_to_excel(
                     length = 0
                 else:
                     length = len(str(val))
-            except:
+            except Exception:
                 length = 0
 
             if length > max_len:
@@ -187,8 +186,10 @@ def apply_openpyxl_autofit_and_theme(
                 # styling code continues
                 cell.font = Font(bold=True)
                 cell.fill = PatternFill("solid", fgColor="DDDDDD")
-                cell.alignment = Alignment(horizontal="center", vertical="center")
-                cell.border = Border(left=thin, right=thin, top=thin, bottom=thin)
+                cell.alignment = Alignment(
+                    horizontal="center", vertical="center")
+                cell.border = Border(left=thin, right=thin,
+                                     top=thin, bottom=thin)
 
         # number formats
         if number_format_map:
@@ -202,7 +203,10 @@ def apply_openpyxl_autofit_and_theme(
         # autofit
         for col in ws.columns:
             max_len = 0
-            col_letter = get_column_letter(col[0].column)
+            col_index = col[0].column
+            if col_index is None or not isinstance(col_index, int):
+                continue
+            col_letter = get_column_letter(col_index)
 
             # Bug fix: Flattened the nested loop to correctly calculate max_len
             for cell in col:
@@ -212,11 +216,12 @@ def apply_openpyxl_autofit_and_theme(
                         length = 0
                     else:
                         length = len(str(val))
-                except:
+                except Exception:
                     length = 0
                 if length > max_len:
                     max_len = length
-            ws.column_dimensions[col_letter].width = min(max(50, max_len + 2), 100)
+            ws.column_dimensions[col_letter].width = min(
+                max(50, max_len + 2), 100)
 
     if apply_theme:
         pass
@@ -261,7 +266,8 @@ def trim_whitespace(df):
     df2 = df.copy()
     for col in df2.columns:
         if df2[col].dtype == object:
-            df2[col] = df2[col].apply(lambda x: x.strip() if isinstance(x, str) else x)
+            df2[col] = df2[col].apply(
+                lambda x: x.strip() if isinstance(x, str) else x)
     return df2
 
 
@@ -352,7 +358,7 @@ class ExcelCleanerWindow(QWidget):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Excel Formatter")
-        self.resize(1100, 700)
+        # self.resize(1100, 700)
         self.selected_files = []
         self.output_folder = None
         self.overwrite_originals = False
@@ -426,9 +432,11 @@ class ExcelCleanerWindow(QWidget):
 
         self.chk_numbers = QCheckBox("Convert numbers stored as text")
         self.chk_trim = QCheckBox("Trim leading/trailing spaces")
-        self.chk_dates = QCheckBox("Normalize date format (default dd-mm-yyyy)")
+        self.chk_dates = QCheckBox(
+            "Normalize date format (default dd-mm-yyyy)")
         self.date_format_combo = QComboBox()
-        self.date_format_combo.addItems(["dd-mm-yyyy", "yyyy-mm-dd", "mm/dd/yyyy"])
+        self.date_format_combo.addItems(
+            ["dd-mm-yyyy", "yyyy-mm-dd", "mm/dd/yyyy"])
         self.chk_number_format = QCheckBox("Apply number format")
         self.num_format_combo = QComboBox()
         self.num_format_combo.addItems(
@@ -440,7 +448,8 @@ class ExcelCleanerWindow(QWidget):
         )
         self.chk_text_case = QCheckBox("Apply text case")
         self.text_case_combo = QComboBox()
-        self.text_case_combo.addItems(["none", "UPPERCASE", "lowercase", "Title Case"])
+        self.text_case_combo.addItems(
+            ["none", "UPPERCASE", "lowercase", "Title Case"])
 
         fix_layout.addWidget(self.chk_numbers)
         fix_layout.addWidget(self.chk_trim)
@@ -524,7 +533,8 @@ class ExcelCleanerWindow(QWidget):
         r_layout = QVBoxLayout()
         right.setLayout(r_layout)
 
-        self.preview_label = QLabel("Preview: (select a file and click Preview)")
+        self.preview_label = QLabel(
+            "Preview: (select a file and click Preview)")
         r_layout.addWidget(self.preview_label)
 
         self.table = QTableWidget()
@@ -566,193 +576,8 @@ class ExcelCleanerWindow(QWidget):
         self.log("Cleared file list.")
 
     def select_output_folder(self):
-        folder = QFileDialog.getExistingDirectory(self, "Select output folder", "")
-        if folder:
-            self.output_folder = folder
-            self.out_folder_label.setText(f"Output folder: {folder}")
-            self.log(f"Output folder set: {folder}")
-
-    def preview_selected(self):
-        # Show preview for currently selected file in list widget
-        item = self.file_list_widget.currentItem()
-        if not item:
-            QMessageBox.warning(
-                self,
-                "No file selected",
-                "Please select one file from the list to preview.",
-            )
-            return
-        path = item.text()
-        try:
-            df = read_file_to_df(path)
-        except Exception as e:
-            QMessageBox.critical(self, "Read Error", f"Failed to read {path}\n{e}")
-            return
-
-        # Apply the selected fixes to a copy for preview (but do not save)
-        df_preview = df.copy()
-
-        # selective fixes applied to preview if checked
-        if self.chk_trim.isChecked():
-            df_preview = trim_whitespace(df_preview)
-        if self.chk_numbers.isChecked():
-            df_preview, conversions = detect_and_convert_numbers(df_preview)
-        if self.chk_dates.isChecked():
-            df_preview, conv = normalize_dates(
-                df_preview, target_format=self.date_format_combo.currentText()
-            )
-        if self.chk_text_case.isChecked():
-            sel = self.text_case_combo.currentText()
-            case_map = {
-                "none": "none",
-                "UPPERCASE": "upper",
-                "lowercase": "lower",
-                "Title Case": "title",
-            }
-            df_preview = apply_text_case(df_preview, case_map.get(sel, "none"))
-
-        # number formatting preview won't change actual numbers in preview (we'll show numbers), but we could round
-        if self.chk_number_format.isChecked():
-            nf_opt = self.num_format_combo.currentText()
-            nf_key = (
-                "2_decimals"
-                if "2" in nf_opt
-                else ("no_decimals" if "no" in nf_opt.lower() else "currency")
-            )
-            cur_sym = self.currency_input.text().strip() or "₹"
-            df_preview, nf_map = apply_number_formatting(
-                df_preview, option=nf_key, currency_symbol=cur_sym
-            )
-
-        # display first 50 rows
-        self.show_dataframe_in_table(df_preview.head(50))
-        self.preview_label.setText(f"Preview: {os.path.basename(path)} (first 50 rows)")
-
-    def show_dataframe_in_table(self, df):
-        self.table.clear()
-        rows, cols = df.shape
-        self.table.setColumnCount(cols)
-        self.table.setRowCount(rows)
-        self.table.setHorizontalHeaderLabels(list(df.columns))
-        for i in range(rows):
-            for j, col in enumerate(df.columns):
-                val = df.iloc[i, j]
-                if pd.isna(val):
-                    text = ""
-                else:
-                    text = str(val)
-                item = QTableWidgetItem(text)
-                self.table.setItem(i, j, item)
-        self.table.resizeColumnsToContents()
-
-    def apply_to_all(self):
-        if not self.file_list_widget.count():
-            QMessageBox.warning(
-                self, "No files", "No files selected. Add files or a folder first."
-            )
-            return
-
-        # Determine output folder
-        if self.keep_radio.isChecked():
-            if not self.output_folder:
-                # default to 'Processed' in current working directory
-                self.output_folder = os.path.join(os.getcwd(), "Processed")
-                os.makedirs(self.output_folder, exist_ok=True)
-                self.out_folder_label.setText(f"Output folder: {self.output_folder}")
-                self.log(
-                    f"No output folder chosen. Using default: {self.output_folder}"
-                )
-        else:
-            # overwrite originals
-            self.output_folder = None
-
-        # Build a list of file paths
-
-
-        # D. Preview & Apply
-        preview_group = QGroupBox("D. Preview & Apply")
-        preview_layout = QVBoxLayout()
-        preview_group.setLayout(preview_layout)
-
-        btns_preview = QWidget()
-        bp_layout = QHBoxLayout()
-        btns_preview.setLayout(bp_layout)
-        bp_layout.setContentsMargins(0, 0, 0, 0)
-        self.preview_btn = QPushButton("Preview Selected File")
-        self.apply_btn = QPushButton("Apply to All")
-        bp_layout.addWidget(self.preview_btn)
-        bp_layout.addWidget(self.apply_btn)
-        preview_layout.addWidget(btns_preview)
-
-        self.progress = QProgressBar()
-        self.progress.setValue(0)
-        preview_layout.addWidget(self.progress)
-
-        # Log textarea
-        self.log_text = QTextEdit()
-        self.log_text.setReadOnly(True)
-        preview_layout.addWidget(QLabel("Log / Report"))
-        preview_layout.addWidget(self.log_text, 1)
-
-        # Wire preview and apply
-        self.preview_btn.clicked.connect(self.preview_selected)
-        self.apply_btn.clicked.connect(self.apply_to_all)
-
-        # Add groups to control layout
-        c_layout.addWidget(file_group)
-        c_layout.addWidget(fix_group)
-        c_layout.addWidget(tasks_group)
-        c_layout.addWidget(preview_group)
-        c_layout.addStretch(1)
-
-        # Right: Preview table
-        right = QWidget()
-        r_layout = QVBoxLayout()
-        right.setLayout(r_layout)
-
-        self.preview_label = QLabel("Preview: (select a file and click Preview)")
-        r_layout.addWidget(self.preview_label)
-
-        self.table = QTableWidget()
-        r_layout.addWidget(self.table, 1)
-
-        # Add both panes to main
-        main_layout.addWidget(controls)
-        main_layout.addWidget(right, 1)
-
-    # ---------- UI Actions ----------
-    def add_files(self):
-        files, _ = QFileDialog.getOpenFileNames(
-            self, "Select Excel/CSV files", "", "Spreadsheet files (*.xlsx *.xls *.csv)"
-        )
-        if files:
-            for f in files:
-                if f not in self.selected_files:
-                    self.selected_files.append(f)
-                    self.file_list_widget.addItem(f)
-            self.log(f"Added {len(files)} files.")
-
-    def add_folder(self):
         folder = QFileDialog.getExistingDirectory(
-            self, "Select folder containing Excel/CSV files", ""
-        )
-        if folder:
-            files = list_excel_files_in_folder(folder)
-            added = 0
-            for f in files:
-                if f not in self.selected_files:
-                    self.selected_files.append(f)
-                    self.file_list_widget.addItem(f)
-                    added += 1
-            self.log(f"Added {added} files from folder {folder}.")
-
-    def clear_files(self):
-        self.selected_files = []
-        self.file_list_widget.clear()
-        self.log("Cleared file list.")
-
-    def select_output_folder(self):
-        folder = QFileDialog.getExistingDirectory(self, "Select output folder", "")
+            self, "Select output folder", "")
         if folder:
             self.output_folder = folder
             self.out_folder_label.setText(f"Output folder: {folder}")
@@ -772,7 +597,8 @@ class ExcelCleanerWindow(QWidget):
         try:
             df = read_file_to_df(path)
         except Exception as e:
-            QMessageBox.critical(self, "Read Error", f"Failed to read {path}\n{e}")
+            QMessageBox.critical(self, "Read Error",
+                                 f"Failed to read {path}\n{e}")
             return
 
         # Apply the selected fixes to a copy for preview (but do not save)
@@ -812,7 +638,8 @@ class ExcelCleanerWindow(QWidget):
 
         # display first 50 rows
         self.show_dataframe_in_table(df_preview.head(50))
-        self.preview_label.setText(f"Preview: {os.path.basename(path)} (first 50 rows)")
+        self.preview_label.setText(
+            f"Preview: {os.path.basename(path)} (first 50 rows)")
 
     def show_dataframe_in_table(self, df):
         self.table.clear()
@@ -844,7 +671,8 @@ class ExcelCleanerWindow(QWidget):
                 # default to 'Processed' in current working directory
                 self.output_folder = os.path.join(os.getcwd(), "Processed")
                 os.makedirs(self.output_folder, exist_ok=True)
-                self.out_folder_label.setText(f"Output folder: {self.output_folder}")
+                self.out_folder_label.setText(
+                    f"Output folder: {self.output_folder}")
                 self.log(
                     f"No output folder chosen. Using default: {self.output_folder}"
                 )
@@ -853,10 +681,13 @@ class ExcelCleanerWindow(QWidget):
             self.output_folder = None
 
         # Build a list of file paths
-        files = [
-            self.file_list_widget.item(i).text()
-            for i in range(self.file_list_widget.count())
-        ]
+        files = []
+        for i in range(self.file_list_widget.count()):
+            item = self.file_list_widget.item(i)
+            if item is not None:
+                text = item.text()
+                if text:
+                    files.append(text)
 
         total = len(files)
         self.progress.setMaximum(total)
@@ -885,7 +716,8 @@ class ExcelCleanerWindow(QWidget):
                             "lowercase": "lower",
                             "Title Case": "title",
                         }
-                        df_proc = apply_text_case(df_proc, case_map.get(sel, "none"))
+                        df_proc = apply_text_case(
+                            df_proc, case_map.get(sel, "none"))
                     if self.chk_remove_dups.isChecked():
                         df_proc = remove_duplicates(df_proc)
 
@@ -917,7 +749,8 @@ class ExcelCleanerWindow(QWidget):
                         # for csv: if multiple sheets? csv only single,
                         # but processed_sheets will have one
                         if processed_sheets:
-                            df_proc, nf_map = list(processed_sheets.values())[0]
+                            df_proc, nf_map = list(
+                                processed_sheets.values())[0]
                             out_path = os.path.join(self.output_folder, base)
                             df_proc.to_csv(out_path, index=False)
                             self.log(f"Saved CSV: {out_path}")
@@ -933,7 +766,8 @@ class ExcelCleanerWindow(QWidget):
                         )
                         wb = Workbook()
                         # remove default sheet
-                        wb.remove(wb.active)
+                        if wb.active is not None:
+                            wb.remove(wb.active)
                         for sheetname, (df_proc, _) in processed_sheets.items():
                             ws = wb.create_sheet(title=sheetname[:31])
                             ws.append(list(df_proc.columns))
@@ -964,12 +798,14 @@ class ExcelCleanerWindow(QWidget):
                     # if csv, write csv
                     if file_path.lower().endswith(".csv"):
                         if processed_sheets:
-                            df_proc, nf_map = list(processed_sheets.values())[0]
+                            df_proc, nf_map = list(
+                                processed_sheets.values())[0]
                             df_proc.to_csv(file_path, index=False)
                             self.log(f"Overwrote CSV: {file_path}")
                     else:
                         wb = Workbook()
-                        wb.remove(wb.active)
+                        if wb.active is not None:
+                            wb.remove(wb.active)
                         for sheetname, (df_proc, _) in processed_sheets.items():
                             ws = wb.create_sheet(title=sheetname[:31])
                             ws.append(list(df_proc.columns))
@@ -1009,9 +845,9 @@ class ExcelCleanerWindow(QWidget):
         """Adds a timestamped message to the log window."""
         ts = datetime.now().strftime("[%H:%M:%S] ")
         self.log_text.append(ts + message)
-        self.log_text.verticalScrollBar().setValue(
-            self.log_text.verticalScrollBar().maximum()
-        )
+        scrollbar = self.log_text.verticalScrollBar()
+        if scrollbar is not None:
+            scrollbar.setValue(scrollbar.maximum())
 
 
 def main():

@@ -4,7 +4,6 @@ import pdfplumber
 import pandas as pd
 from PyQt5.QtWidgets import (
     QApplication,
-    QMainWindow,
     QLabel,
     QPushButton,
     QVBoxLayout,
@@ -25,9 +24,9 @@ class PDFTableExtractor(QWidget):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("PDF to Excel PRO Tool")
-        self.resize(1600, 800)
+        # self.resize(1600, 800)
         self.checkboxes = []
-        self.center_window()
+        # self.center_window()
         self.setup_ui()
 
     def center_window(self):
@@ -47,7 +46,7 @@ class PDFTableExtractor(QWidget):
         top_layout = QHBoxLayout()
 
         self.label = QLabel("Select a PDF file to extract tables")
-        self.label.setAlignment(Qt.AlignLeft)
+        self.label.setAlignment(Qt.AlignmentFlag.AlignLeft)
         top_layout.addWidget(self.label)
         # Turn QLabel into a framed box
         self.label.setFrameShape(QFrame.Box)  # Box frame
@@ -109,9 +108,11 @@ class PDFTableExtractor(QWidget):
 
     def clear_preview(self):
         for i in reversed(range(self.scroll_layout.count())):
-            widget = self.scroll_layout.itemAt(i).widget()
-            if widget is not None:
-                widget.deleteLater()
+            item = self.scroll_layout.itemAt(i)
+            if item is not None:
+                widget = item.widget()
+                if widget is not None:
+                    widget.deleteLater()
         self.checkboxes.clear()
 
     def convert_to_excel(self):

@@ -6,7 +6,8 @@ from PyQt5.QtWidgets import (
     QVBoxLayout,
     QWidget,
     QLabel,
-    QStyleFactory
+    QStyleFactory,
+    QDesktopWidget
 )
 from PyQt5.QtGui import QFont
 from PyQt5.QtCore import Qt
@@ -209,7 +210,9 @@ class DesktopSuiteApp(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("CA Firm Office Suite - Desktop")
-        self.resize(1100, 650) # Reduced size for better laptop compatibility
+        self.resize(800, 600)  # Reduced size for better laptop compatibility
+
+        self.center_window()
 
         # Setup Theme
         QApplication.setStyle(QStyleFactory.create("Fusion"))
@@ -217,18 +220,25 @@ class DesktopSuiteApp(QMainWindow):
 
         self.setup_ui()
 
+    def center_window(self):
+        # Center the window on the screen
+        screen = QDesktopWidget().screenGeometry()
+        size = self.geometry()
+        self.move((screen.width() - size.width()) // 2,
+                  (screen.height() - size.height()) // 2)
+
     def setup_ui(self):
         # Main Layout
         main_widget = QWidget()
         self.setCentralWidget(main_widget)
         layout = QVBoxLayout(main_widget)
-        layout.setContentsMargins(0, 0, 0, 0) # Edge to edge
+        layout.setContentsMargins(0, 0, 0, 0)  # Edge to edge
         layout.setSpacing(10)
 
         # Header
         header = QLabel("CA Firm Office Suite")
-        header.setObjectName("HeaderLabel") # For CSS targeting
-        header.setAlignment(Qt.AlignCenter)
+        header.setObjectName("HeaderLabel")  # For CSS targeting
+        header.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(header)
 
         # Container for content with some margin
