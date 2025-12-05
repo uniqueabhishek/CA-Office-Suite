@@ -21,7 +21,7 @@ from PyQt5.QtWidgets import (
 from PyQt5.QtCore import Qt
 
 
-class PDFTableExtractor(QMainWindow):
+class PDFTableExtractor(QWidget):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("PDF to Excel PRO Tool")
@@ -38,10 +38,10 @@ class PDFTableExtractor(QMainWindow):
         self.move(frame_geometry.topLeft())
 
     def setup_ui(self):
-        main_widget = QWidget()
-        self.setCentralWidget(main_widget)
+        # main_widget = QWidget()
+        # self.setCentralWidget(main_widget)
 
-        main_layout = QVBoxLayout(main_widget)
+        main_layout = QVBoxLayout(self)
 
         # Top section with label and buttons
         top_layout = QHBoxLayout()

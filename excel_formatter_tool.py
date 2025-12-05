@@ -348,7 +348,7 @@ def remove_duplicates(df):
 
 
 # ---------- GUI ----------
-class ExcelCleanerWindow(QMainWindow):
+class ExcelCleanerWindow(QWidget):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Excel Formatter")
@@ -360,10 +360,10 @@ class ExcelCleanerWindow(QMainWindow):
         self._build_ui()
 
     def _build_ui(self):
-        main = QWidget()
+        # main = QWidget()
         main_layout = QHBoxLayout()
-        main.setLayout(main_layout)
-        self.setCentralWidget(main)
+        self.setLayout(main_layout)
+        # self.setCentralWidget(main)
 
         # Left: Controls
         controls = QWidget()
@@ -473,9 +473,6 @@ class ExcelCleanerWindow(QMainWindow):
         tasks_group = QGroupBox("C. Basic Tasks")
         tasks_layout = QVBoxLayout()
         tasks_group.setLayout(tasks_layout)
-
-        # self.chk_merge = QCheckBox("Merge selected files into one workbook (concatenate sheets)") # REMOVED
-        # self.chk_split = QCheckBox("Split workbook sheets into separate files") # REMOVED
 
         self.chk_remove_dups = QCheckBox("Remove duplicate rows")
         tasks_layout.addWidget(self.chk_remove_dups)
@@ -670,16 +667,7 @@ class ExcelCleanerWindow(QMainWindow):
             self.output_folder = None
 
         # Build a list of file paths
-        # self.chk_split = QCheckBox("Split workbook sheets into separate files") # REMOVED
 
-        self.chk_remove_dups = QCheckBox("Remove duplicate rows")
-        tasks_layout.addWidget(self.chk_remove_dups)
-
-        self.chk_autofit = QCheckBox("Auto-adjust column widths")
-        tasks_layout.addWidget(self.chk_autofit)
-
-        self.chk_theme = QCheckBox("Apply simple style/theme")
-        tasks_layout.addWidget(self.chk_theme)
 
         # D. Preview & Apply
         preview_group = QGroupBox("D. Preview & Apply")

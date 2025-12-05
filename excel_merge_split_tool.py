@@ -164,7 +164,7 @@ def apply_openpyxl_autofit_and_theme(
     wb.save(path)
 
 # ---------- GUI ----------
-class ExcelMergeSplitWindow(QMainWindow):
+class ExcelMergeSplitWindow(QWidget):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Excel Merge/Split Tool")
@@ -176,10 +176,10 @@ class ExcelMergeSplitWindow(QMainWindow):
         self._build_ui()
 
     def _build_ui(self):
-        main = QWidget()
+        # main = QWidget()
         main_layout = QVBoxLayout()
-        main.setLayout(main_layout)
-        self.setCentralWidget(main)
+        self.setLayout(main_layout)
+        # self.setCentralWidget(main)
 
         # A. File Handling
         file_group = QGroupBox("1. File Selection")
