@@ -20,89 +20,187 @@ from excel_merge_split_tool import ExcelMergeSplitWindow
 MODERN_STYLESHEET = """
 /* Global Application Styling */
 QMainWindow {
-    background-color: #f3f3f3;
+    background-color: #f0f2f5; /* Light Gray Background */
 }
 QWidget {
-    font-family: "Segoe UI", sans-serif;
-    color: #333333;
+    font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+    font-size: 14px;
+    color: #202020;
 }
 
-/* Header Styling */
+/* Header Styling - Premium Brand Look */
 QLabel#HeaderLabel {
-    color: #217346; /* Excel Green */
-    font-size: 26px;
-    font-weight: bold;
-    padding: 15px;
-    background-color: #ffffff;
-    border-bottom: 2px solid #217346;
+    background-color: #107c41; /* Excel Green Brand Color */
+    color: #ffffff;
+    font-size: 24px;
+    font-weight: 600;
+    padding: 18px 30px;
+    border-bottom: 4px solid #0c5c30; /* Darker accent border */
 }
 
-/* Tab Widget Styling */
+/* Tab Widget Styling - Card Look */
 QTabWidget::pane {
-    border: 1px solid #dcdcdc;
+    border: 1px solid #e0e0e0;
     background: #ffffff;
-    border-radius: 4px;
+    border-radius: 8px; /* Softer corners */
+    border-top-left-radius: 0px; /* Connects to active tab */
     margin-top: -1px;
+    /* Subtle shadow effect simulated with border */
+    border-bottom: 2px solid #d0d0d0;
+    border-right: 2px solid #d0d0d0;
 }
 
 QTabBar::tab {
-    background: #e1e1e1;
-    border: 1px solid #dcdcdc;
-    padding: 10px 20px;
+    background: #e5e5e5;
+    border: none;
+    padding: 12px 28px;
     margin-right: 2px;
-    border-top-left-radius: 4px;
-    border-top-right-radius: 4px;
+    border-top-left-radius: 6px;
+    border-top-right-radius: 6px;
     color: #555555;
     font-weight: 500;
-    min-width: 120px;
+    min-width: 130px;
 }
 
 QTabBar::tab:selected {
     background: #ffffff;
-    border-bottom: 1px solid #ffffff; /* Merge with pane */
-    color: #217346; /* Excel Green */
+    color: #107c41; /* Brand Green */
     font-weight: bold;
-    border-top: 3px solid #217346; /* Top Highlight */
+    border-bottom: 1px solid #ffffff; /* Merge with pane */
+    border-top: 3px solid #107c41; /* Top Brand Line */
 }
 
 QTabBar::tab:hover:!selected {
-    background: #eaeaea;
-    color: #333333;
+    background: #dcdcdc;
+    color: #000000;
 }
 
-/* Button Generic Styling (for consistency across tools if they inherit) */
-QPushButton {
-    background-color: #217346; /* Excel Green */
-    color: white;
-    border: none;
-    padding: 8px 16px;
+/* GroupBox Styling */
+QGroupBox {
+    border: 1px solid #e0e0e0;
+    border-radius: 6px;
+    margin-top: 1.2em;
+    padding-top: 10px;
+    background-color: #fafafa;
+}
+QGroupBox::title {
+    subcontrol-origin: margin;
+    subcontrol-position: top left;
+    padding: 0 10px;
+    color: #107c41;
+    font-weight: 700;
+}
+
+/* Input Fields */
+QLineEdit, QTextEdit, QPlainTextEdit, QSpinBox, QDoubleSpinBox {
+    border: 1px solid #c8c8c8;
     border-radius: 4px;
-    font-weight: bold;
+    padding: 8px 10px;
+    background-color: #ffffff;
+    selection-background-color: #107c41;
+    selection-color: white;
+}
+QLineEdit:focus, QTextEdit:focus, QPlainTextEdit:focus {
+    border: 2px solid #107c41;
+    background-color: #ffffff;
 }
 
+/* Combo Box */
+QComboBox {
+    border: 1px solid #c8c8c8;
+    border-radius: 4px;
+    padding: 6px 12px;
+    min-width: 6em;
+    background: #ffffff;
+}
+QComboBox:hover {
+    border: 1px solid #107c41;
+}
+QComboBox::drop-down {
+    subcontrol-origin: padding;
+    subcontrol-position: top right;
+    width: 20px;
+    border-left-width: 0px;
+}
+
+/* Buttons - Primary Action Look */
+QPushButton {
+    background-color: #107c41;
+    color: white;
+    border: 1px solid #107c41;
+    padding: 9px 22px;
+    border-radius: 4px;
+    font-weight: 600;
+    font-size: 14px;
+}
 QPushButton:hover {
-    background-color: #2a9155;
+    background-color: #159e52;
+    border-color: #159e52;
 }
-
 QPushButton:pressed {
-    background-color: #1a5c38;
+    background-color: #0c5c30;
+    border-color: #0c5c30;
+}
+QPushButton:disabled {
+    background-color: #e0e0e0;
+    border-color: #e0e0e0;
+    color: #888888;
 }
 
-/* Scrollbars */
+/* Tables - Data Grid Look */
+QTableWidget {
+    background-color: #ffffff;
+    alternate-background-color: #fefefe;
+    gridline-color: #e0e0e0;
+    border: 1px solid #d0d0d0;
+    selection-background-color: #e6f7ec;
+    selection-color: #000000;
+    font-size: 13px;
+}
+QHeaderView::section {
+    background-color: #f9f9f9;
+    padding: 10px;
+    border: none;
+    border-bottom: 2px solid #107c41;
+    border-right: 1px solid #e0e0e0;
+    font-weight: 700;
+    color: #444444;
+    text-transform: uppercase;
+    font-size: 12px;
+}
+
+/* Scrollbars - Minimalist */
 QScrollBar:vertical {
     border: none;
-    background: #f0f0f0;
-    width: 10px;
-    margin: 0px 0px 0px 0px;
+    background: #f1f1f1;
+    width: 14px;
+    margin: 0px;
 }
 QScrollBar::handle:vertical {
     background: #c1c1c1;
     min-height: 20px;
-    border-radius: 5px;
+    border-radius: 7px;
+    margin: 2px;
+}
+QScrollBar::handle:vertical:hover {
+    background: #a8a8a8;
 }
 QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
+    height: 0px;
+}
+
+/* Progress Bar */
+QProgressBar {
     border: none;
-    background: none;
+    background-color: #e0e0e0;
+    border-radius: 4px;
+    text-align: center;
+    color: white;
+    font-weight: bold;
+}
+QProgressBar::chunk {
+    background-color: #107c41;
+    border-radius: 4px;
 }
 """
 
@@ -111,7 +209,7 @@ class DesktopSuiteApp(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("CA Firm Office Suite - Desktop")
-        self.resize(1280, 850)
+        self.resize(1100, 650) # Reduced size for better laptop compatibility
 
         # Setup Theme
         QApplication.setStyle(QStyleFactory.create("Fusion"))
