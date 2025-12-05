@@ -24,7 +24,7 @@ from PyQt5.QtCore import Qt
 class PDFTableExtractor(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("Professional PDF to Excel Converter")
+        self.setWindowTitle("PDF to Excel PRO Tool")
         self.resize(1600, 800)
         self.checkboxes = []
         self.center_window()

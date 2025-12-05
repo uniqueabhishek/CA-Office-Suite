@@ -3,7 +3,7 @@ __pycache__/
 *.pyc
 legacy_backup/
 uploads/
-*.bat
+
 cloudflared.exe
 *.spec
 dist/

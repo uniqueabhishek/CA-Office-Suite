@@ -4,3 +4,5 @@ pdfplumber
 openpyxl
 werkzeug
 gunicorn
+PyQt5
+xlrd
