@@ -4,4 +4,4 @@ pdfplumber
 openpyxl
 werkzeug
 gunicorn
-
+xlrd
