@@ -26,102 +26,16 @@ from openpyxl.utils import get_column_letter
 from openpyxl.utils.dataframe import dataframe_to_rows
 from openpyxl.styles import Font, PatternFill, Border, Side, Alignment
 
-SUPPORTED_EXTENSIONS = (".xlsx", ".xls", ".csv")
+# Import shared utilities from core modules
+from core.excel_utils import list_excel_files_in_folder, read_file_to_df, read_all_sheets
+from core.excel_writer import save_df_to_excel
+from config.constants import SUPPORTED_EXTENSIONS
+
+# Note: Utility functions list_excel_files_in_folder, read_file_to_df, read_all_sheets,
+# and save_df_to_excel are now imported from core modules above.
 
 
-# ---------- Utility functions ----------
-def list_excel_files_in_folder(folder):
-    """
-    Recursively lists all supported Excel and CSV files in a given folder.
-    """
-    out = []
-    for root, _, files in os.walk(folder):
-        for f in files:
-            if f.lower().endswith(SUPPORTED_EXTENSIONS):
-                out.append(os.path.join(root, f))
-    return out
-
-
-def read_file_to_df(path):
-    """
-    Reads a single supported file (Excel or CSV) into a pandas DataFrame.
-    For Excel files, it reads only the first sheet.
-    """
-    ext = os.path.splitext(path)[1].lower()
-    if ext == ".csv":
-        return pd.read_csv(path, dtype=str, keep_default_na=False)
-    else:
-        try:
-            return pd.read_excel(path, sheet_name=0, dtype=str, keep_default_na=False)
-        except Exception:
-            return pd.read_excel(
-                path, sheet_name=0, engine="xlrd", dtype=str, keep_default_na=False
-            )
-
-
-def read_all_sheets(path):
-    """
-    Reads all sheets from a supported file into a dictionary of DataFrames.
-    Return dict of sheetname -> DataFrame.
-    """
-    ext = os.path.splitext(path)[1].lower()
-    if ext == ".csv":
-        return {"Sheet1": pd.read_csv(path, dtype=str, keep_default_na=False)}
-    else:
-        return pd.read_excel(path, sheet_name=None, dtype=str, keep_default_na=False)
-
-
-def save_df_to_excel(
-    df, path, sheet_name="Sheet1", number_format_map=None, apply_theme=False
-):
-    """
-    Save a single DataFrame to an .xlsx file using openpyxl.
-    """
-    wb = Workbook()
-    ws = wb.active
-    if ws is not None:
-        ws.title = sheet_name
-    else:
-        ws = wb.create_sheet(title=sheet_name)
-
-    # Write header and rows using fast dataframe_to_rows
-    # This is 100-1000x faster than iterrows()
-    headers = list(df.columns)
-    for row in dataframe_to_rows(df, index=False, header=True):
-        ws.append(row)
-
-    thin = Side(border_style="thin", color="000000")
-    for col_index, col in enumerate(headers, start=1):
-        letter = get_column_letter(col_index)
-        cell = ws[f"{letter}1"]
-        cell.font = Font(bold=True)
-        cell.fill = PatternFill("solid", fgColor="DDDDDD")
-        cell.alignment = Alignment(horizontal="center", vertical="center")
-        cell.border = Border(left=thin, right=thin, top=thin, bottom=thin)
-
-    if apply_theme:
-        pass
-
-    for col in ws.columns:
-        max_len = 0
-        col_index = col[0].column
-        if col_index is None or not isinstance(col_index, int):
-            continue
-        col_letter = get_column_letter(col_index)
-        # Optimized: removed exception handling from hot loop (10-100x faster)
-        for cell in col:
-            val = cell.value
-            length = 0 if val is None else len(str(val))
-            if length > max_len:
-                max_len = length
-        ws.column_dimensions[col_letter].width = min(max(50, max_len + 2), 100)
-
-    output_directory = os.path.dirname(path)
-    if output_directory and not os.path.exists(output_directory):
-        os.makedirs(output_directory)
-    wb.save(path)
-
-
+# ---------- Legacy utility functions (to be removed in Phase 4.2) ----------
 def apply_openpyxl_autofit_and_theme(
     path, sheet_name=None, number_format_map=None, apply_theme=False
 ):
