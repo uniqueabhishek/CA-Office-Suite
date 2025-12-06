@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}Merge & Split | CA Office Suite{% endblock %}
+
+{% block content %}
+<form action="{{ url_for('merge') }}" method="post" enctype="multipart/form-data">
+
+    <!-- 1. File Selection -->
+    <div class="group-box">
+        <span class="group-title">1. File Selection</span>
+        <label class="form-label">Select Excel files to Merge OR Split:</label>
+        <input type="file" name="files" class="form-control" multiple accept=".xlsx,.xls,.csv" required>
+        <div class="mt-2 text-muted">
+            You can select multiple files at once.
+        </div>
+    </div>
+
+    <!-- 2. Select Operation -->
+    <div class="group-box">
+        <span class="group-title">2. Select Operation</span>
+
+        <div class="checkbox-row">
+            <input type="radio" name="operation" id="op_merge" value="merge" checked>
+            <label for="op_merge" class="fw-bold">Merge selected files into one workbook</label>
+        </div>
+        <div style="margin-left: 25px; margin-bottom: 15px;">
+            <label>Merged Filename:</label>
+            <input type="text" name="merged_filename" value="merged_output.xlsx" class="form-control" style="width: 300px; display: inline-block;">
+        </div>
+
+        <div class="checkbox-row">
+            <input type="radio" name="operation" id="op_split" value="split">
+            <label for="op_split" class="fw-bold">Split workbook sheets into separate files</label>
+        </div>
+    </div>
+
+    <!-- 3. Process -->
+    <div class="group-box">
+        <span class="group-title">3. Process</span>
+        <button type="submit" class="btn btn-primary" style="width: 100%;">Start Processing</button>
+    </div>
+
+    <div class="group-box">
+        <span class="group-title">Log / Report</span>
+        <div style="min-height: 100px; background: #fff; border: 1px solid #ddd; padding: 10px; color: #555;">
+            Waiting for input...
+        </div>
+    </div>
+
+</form>
+{% endblock %}

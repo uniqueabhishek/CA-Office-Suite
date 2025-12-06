@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+{% block title %}Excel Formatter | CA Office Suite{% endblock %}
+
+{% block content %}
+<form action="{{ url_for('formatter') }}" method="post" enctype="multipart/form-data" class="split-layout">
+
+    <!-- Left Panel: Controls -->
+    <div class="left-panel">
+
+        <!-- A. File Handling -->
+        <div class="group-box">
+            <span class="group-title">A. File Handling</span>
+            <input type="file" name="file" class="form-control" accept=".xlsx,.xls,.csv" required>
+            <div class="mt-2 text-muted" style="font-size: 0.85em;">
+                Only one file supported in web version currently.
+            </div>
+        </div>
+
+        <!-- B. Formatting Fixes -->
+        <div class="group-box">
+            <span class="group-title">B. Formatting Fixes</span>
+
+            <div class="checkbox-row">
+                <input type="checkbox" name="chk_numbers" id="chk_numbers">
+                <label for="chk_numbers">Convert numbers stored as text</label>
+            </div>
+
+            <div class="checkbox-row">
+                <input type="checkbox" name="chk_trim" id="chk_trim">
+                <label for="chk_trim">Trim leading/trailing spaces</label>
+            </div>
+
+            <div class="checkbox-row">
+                <input type="checkbox" name="chk_dates" id="chk_dates">
+                <label for="chk_dates">Normalize date format</label>
+                <select name="date_format" class="form-select" style="width: auto; padding: 2px 5px; margin: 0;">
+                    <option value="dd-mm-yyyy">dd-mm-yyyy</option>
+                    <option value="yyyy-mm-dd">yyyy-mm-dd</option>
+                </select>
+            </div>
+
+            <div class="checkbox-row">
+                <input type="checkbox" name="chk_number_format" id="chk_number_format">
+                <label for="chk_number_format">Apply number format</label>
+                <select name="number_format_option" class="form-select" style="width: auto; padding: 2px 5px; margin: 0;">
+                    <option value="2_decimals">2 decimals</option>
+                    <option value="no_decimals">No decimals</option>
+                    <option value="currency">Currency</option>
+                </select>
+            </div>
+
+            <input type="text" name="currency_symbol" class="form-control" placeholder="Currency symbol (e.g. ₹). Empty = default" style="margin-top: 5px;">
+
+            <div class="checkbox-row" style="margin-top: 8px;">
+                <input type="checkbox" name="chk_text_case" id="chk_text_case">
+                <label for="chk_text_case">Apply text case</label>
+                <select name="text_case_option" class="form-select" style="width: auto; padding: 2px 5px; margin: 0;">
+                    <option value="none">none</option>
+                    <option value="upper">UPPERCASE</option>
+                    <option value="lower">lowercase</option>
+                    <option value="title">Title Case</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- C. Basic Tasks -->
+        <div class="group-box">
+            <span class="group-title">C. Basic Tasks</span>
+            <div class="checkbox-row">
+                <input type="checkbox" name="chk_remove_dups" id="chk_remove_dups">
+                <label for="chk_remove_dups">Remove duplicate rows</label>
+            </div>
+            <div class="checkbox-row">
+                <input type="checkbox" name="chk_autofit" id="chk_autofit">
+                <label for="chk_autofit">Auto-adjust column widths</label>
+            </div>
+            <div class="checkbox-row">
+                <input type="checkbox" name="chk_theme" id="chk_theme">
+                <label for="chk_theme">Apply simple style/theme</label>
+            </div>
+        </div>
+
+        <!-- Buttons -->
+        <div class="mb-3">
+            <button type="submit" class="btn btn-primary" style="width: 100%;">Process & Download</button>
+        </div>
+
+    </div>
+
+    <!-- Right Panel: Preview -->
+    <div class="right-panel">
+        <div style="padding: 10px; border-bottom: 1px solid #ddd; font-weight: bold; background: #fafafa;">
+            Preview: (Preview functionality coming soon)
+        </div>
+        <div class="table-wrapper">
+            <div style="padding: 20px; text-align: center; color: #999;">
+                Upload a file to process. <br>
+                For now, clicking "Process" downloads the fixed file directly.
+            </div>
+        </div>
+    </div>
+
+</form>
+{% endblock %}

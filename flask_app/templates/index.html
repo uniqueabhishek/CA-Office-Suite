@@ -1,58 +1,24 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PDF to Excel Converter</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-</head>
-<body class="bg-light">
+{% extends "base.html" %}
+{% block title %}PDF to Excel | CA Office Suite{% endblock %}
 
-<div class="container mt-5">
-    <div class="row justify-content-center">
-        <div class="col-md-8 text-center">
-            <div class="card shadow-lg border-0 rounded-lg mt-5">
-                <div class="card-header bg-primary text-white">
-                    <h3 class="font-weight-light my-2"><i class="fas fa-file-excel me-2"></i>PDF to Excel Converter</h3>
-                </div>
-                <div class="card-body py-5">
-
-                    {% with messages = get_flashed_messages() %}
-                      {% if messages %}
-                        {% for message in messages %}
-                          <div class="alert alert-warning alert-dismissible fade show" role="alert">
-                            {{ message }}
-                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                          </div>
-                        {% endfor %}
-                      {% endif %}
-                    {% endwith %}
-
-                    <h5 class="card-title mb-4">Upload your PDF to extract tables</h5>
-                    <p class="text-muted mb-4">Select a PDF file, preview detected tables, and download them as an Excel spreadsheet.</p>
-
-                    <form method="post" enctype="multipart/form-data" class="dropzone-area">
-                        <div class="mb-4">
-                            <label for="pdfFile" class="form-label visually-hidden">Select PDF</label>
-                            <input class="form-control form-control-lg" type="file" id="pdfFile" name="file" accept=".pdf" required>
-                        </div>
-                        <div class="d-grid gap-2 col-6 mx-auto">
-                            <button type="submit" class="btn btn-primary btn-lg upload-btn">
-                                <i class="fas fa-cloud-upload-alt me-2"></i> Upload & Analyze
-                            </button>
-                        </div>
-                    </form>
-                </div>
-                <div class="card-footer text-muted py-3">
-                    Fast, Secure, and Client-side Processing
-                </div>
-            </div>
+{% block content %}
+<form action="{{ url_for('index') }}" method="post" enctype="multipart/form-data">
+    <div class="group-box" style="margin-top: 0;">
+        <span class="group-title">PDF Extraction</span>
+        <div style="display: flex; gap: 10px;">
+            <input type="file" name="file" class="form-control" style="margin-bottom: 0;" accept=".pdf" placeholder="Select a PDF file to extract tables">
+            <button type="submit" class="btn btn-primary">Select PDF</button>
         </div>
     </div>
-</div>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-</html>
+    <div class="right-panel" style="background: #f9f9f9; border: 1px solid #ddd; height: 500px; display: flex; align-items: center; justify-content: center; color: #aaa;">
+        <!-- Placeholder for where table selection would go -->
+        {% if not session.get('current_pdf') %}
+            <div>No PDF loaded. Upload a file above to begin.</div>
+        {% else %}
+            <!-- If we were reloading this page with state, we'd show tables here -->
+            <div>PDF Loaded: {{ session.get('original_filename') }} (Control moved to select_tables step)</div>
+        {% endif %}
+    </div>
+</form>
+{% endblock %}

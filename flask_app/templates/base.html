@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}CA Firm Office Suite{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+    <header class="app-header">
+        <h1 class="app-title">CA Firm Office Suite</h1>
+    </header>
+
+    <div class="container">
+        <!-- Tab Navigation -->
+        <ul class="tabs-nav">
+            <li>
+                <a href="{{ url_for('index') }}" class="tab-link {% if active_tab == 'pdf' %}active{% endif %}">
+                    PDF to Excel
+                </a>
+            </li>
+            <li>
+                <a href="{{ url_for('formatter') }}" class="tab-link {% if active_tab == 'formatter' %}active{% endif %}">
+                    Excel Formatter
+                </a>
+            </li>
+            <li>
+                <a href="{{ url_for('merge') }}" class="tab-link {% if active_tab == 'merge' %}active{% endif %}">
+                    Merge & Split
+                </a>
+            </li>
+        </ul>
+
+        <!-- Content Area -->
+        <div class="tab-content">
+            {% with messages = get_flashed_messages() %}
+                {% if messages %}
+                    {% for message in messages %}
+                        <div class="alert">{{ message }}</div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            {% block content %}{% endblock %}
+        </div>
+    </div>
+
+</body>
+</html>
