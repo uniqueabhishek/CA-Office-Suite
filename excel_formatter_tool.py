@@ -1,6 +1,5 @@
 import os
 import traceback
-from datetime import datetime
 import pandas as pd
 from PyQt5 import QtWidgets
 
@@ -19,9 +18,7 @@ from PyQt5.QtWidgets import (
     QComboBox,
     QTableWidget,
     QTableWidgetItem,
-    QProgressBar,
     QRadioButton,
-    QTextEdit,
     QGroupBox,
 )
 
@@ -36,6 +33,7 @@ from core.excel_utils import list_excel_files_in_folder, read_file_to_df, read_a
 from core.excel_writer import save_df_to_excel, apply_formatting_to_workbook
 from config.constants import SUPPORTED_EXTENSIONS
 from workers.formatter_worker import FormatterWorker
+from ui.components import ProgressLogger
 
 # Note: Utility functions list_excel_files_in_folder, read_file_to_df, read_all_sheets,
 # save_df_to_excel, and apply_formatting_to_workbook are now imported from core modules above.
@@ -481,15 +479,9 @@ class ExcelCleanerWindow(QWidget):
         bp_layout.addWidget(self.cancel_btn)
         preview_layout.addWidget(btns_preview)
 
-        self.progress = QProgressBar()
-        self.progress.setValue(0)
-        preview_layout.addWidget(self.progress)
-
-        # Log textarea
-        self.log_text = QTextEdit()
-        self.log_text.setReadOnly(True)
-        preview_layout.addWidget(QLabel("Log / Report"))
-        preview_layout.addWidget(self.log_text, 1)
+        # Progress and log display
+        self.progress_logger = ProgressLogger(log_height=200, show_label=True)
+        preview_layout.addWidget(self.progress_logger, 1)
 
         # Wire preview and apply
         self.preview_btn.clicked.connect(self.preview_selected)
@@ -529,7 +521,7 @@ class ExcelCleanerWindow(QWidget):
                 if f not in self.selected_files:
                     self.selected_files.append(f)
                     self.file_list_widget.addItem(f)
-            self.log(f"Added {len(files)} files.")
+            self.progress_logger.log(f"Added {len(files)} files.")
 
     def add_folder(self):
         folder = QFileDialog.getExistingDirectory(
@@ -543,12 +535,12 @@ class ExcelCleanerWindow(QWidget):
                     self.selected_files.append(f)
                     self.file_list_widget.addItem(f)
                     added += 1
-            self.log(f"Added {added} files from folder {folder}.")
+            self.progress_logger.log(f"Added {added} files from folder {folder}.")
 
     def clear_files(self):
         self.selected_files = []
         self.file_list_widget.clear()
-        self.log("Cleared file list.")
+        self.progress_logger.log("Cleared file list.")
 
     def select_output_folder(self):
         folder = QFileDialog.getExistingDirectory(
@@ -556,7 +548,7 @@ class ExcelCleanerWindow(QWidget):
         if folder:
             self.output_folder = folder
             self.out_folder_label.setText(f"Output folder: {folder}")
-            self.log(f"Output folder set: {folder}")
+            self.progress_logger.log(f"Output folder set: {folder}")
 
     def preview_selected(self):
         # Show preview for currently selected file in list widget
@@ -652,7 +644,7 @@ class ExcelCleanerWindow(QWidget):
                 os.makedirs(self.output_folder, exist_ok=True)
                 self.out_folder_label.setText(
                     f"Output folder: {self.output_folder}")
-                self.log(
+                self.progress_logger.log(
                     f"No output folder chosen. Using default: {self.output_folder}"
                 )
         else:
@@ -709,8 +701,8 @@ class ExcelCleanerWindow(QWidget):
         self.cancel_btn.setEnabled(True)
 
         # Set up progress bar
-        self.progress.setMaximum(len(files))
-        self.progress.setValue(0)
+        self.progress_logger.set_max_progress(len(files))
+        self.progress_logger.set_progress(0)
 
         # Create and start worker thread
         self.worker = FormatterWorker(files, options, self.output_folder, apply_all_transformations, self)
@@ -718,12 +710,12 @@ class ExcelCleanerWindow(QWidget):
         self.worker.finished.connect(self.on_processing_finished)
         self.worker.start()
 
-        self.log(f"Started processing {len(files)} files in background...")
+        self.progress_logger.log(f"Started processing {len(files)} files in background...")
 
     def on_progress_update(self, progress_value, log_message):
         """Slot to handle progress updates from worker thread."""
-        self.progress.setValue(progress_value)
-        self.log(log_message)
+        self.progress_logger.set_progress(progress_value)
+        self.progress_logger.log(log_message)
 
     def on_processing_finished(self, success, message):
         """Slot to handle completion from worker thread."""
@@ -738,7 +730,7 @@ class ExcelCleanerWindow(QWidget):
             self.worker = None
 
         # Show completion message
-        self.log(message)
+        self.progress_logger.log(message)
         if success:
             QMessageBox.information(self, "Finished", message)
         else:
@@ -747,14 +739,6 @@ class ExcelCleanerWindow(QWidget):
     def cancel_processing(self):
         """Cancel the current background processing operation."""
         if self.worker is not None and self.worker.isRunning():
-            self.log("Cancellation requested...")
+            self.progress_logger.log("Cancellation requested...")
             self.worker.cancel()
             self.cancel_btn.setEnabled(False)  # Prevent double-click
-
-    def log(self, message):
-        """Adds a timestamped message to the log window."""
-        ts = datetime.now().strftime("[%H:%M:%S] ")
-        self.log_text.append(ts + message)
-        scrollbar = self.log_text.verticalScrollBar()
-        if scrollbar is not None:
-            scrollbar.setValue(scrollbar.maximum())

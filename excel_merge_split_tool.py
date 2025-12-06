@@ -1,6 +1,5 @@
 import os
 import traceback
-from datetime import datetime
 import pandas as pd
 from PyQt5 import QtWidgets
 from PyQt5.QtWidgets import (
@@ -13,8 +12,6 @@ from PyQt5.QtWidgets import (
     QPushButton,
     QListWidget,
     QCheckBox,
-    QProgressBar,
-    QTextEdit,
     QGroupBox,
 )
 
@@ -29,6 +26,7 @@ from core.excel_utils import list_excel_files_in_folder, read_file_to_df, read_a
 from core.excel_writer import save_df_to_excel
 from config.constants import SUPPORTED_EXTENSIONS
 from workers.merge_worker import MergeWorker
+from ui.components import ProgressLogger
 
 # Note: Utility functions list_excel_files_in_folder, read_file_to_df, read_all_sheets,
 # and save_df_to_excel are now imported from core modules above.
@@ -181,19 +179,13 @@ class ExcelMergeSplitWindow(QWidget):
 
         process_layout.addWidget(btn_row)
 
-        self.progress = QProgressBar()
-        self.progress.setValue(0)
-        process_layout.addWidget(self.progress)
-
-        # Log
-        self.log_text = QTextEdit()
-        self.log_text.setReadOnly(True)
-
         main_layout.addWidget(file_group)
         main_layout.addWidget(tasks_group)
         main_layout.addWidget(process_group)
-        main_layout.addWidget(QLabel("Log / Report"))
-        main_layout.addWidget(self.log_text)
+
+        # Progress and log display
+        self.progress_logger = ProgressLogger(log_height=200, show_label=True)
+        main_layout.addWidget(self.progress_logger)
 
     # ---------- UI Actions ----------
     def add_files(self):
@@ -205,7 +197,7 @@ class ExcelMergeSplitWindow(QWidget):
                 if f not in self.selected_files:
                     self.selected_files.append(f)
                     self.file_list_widget.addItem(f)
-            self.log(f"Added {len(files)} files.")
+            self.progress_logger.log(f"Added {len(files)} files.")
 
     def add_folder(self):
         folder = QFileDialog.getExistingDirectory(
@@ -219,12 +211,12 @@ class ExcelMergeSplitWindow(QWidget):
                     self.selected_files.append(f)
                     self.file_list_widget.addItem(f)
                     added += 1
-            self.log(f"Added {added} files from folder {folder}.")
+            self.progress_logger.log(f"Added {added} files from folder {folder}.")
 
     def clear_files(self):
         self.selected_files = []
         self.file_list_widget.clear()
-        self.log("Cleared file list.")
+        self.progress_logger.log("Cleared file list.")
 
     def select_output_folder(self):
         folder = QFileDialog.getExistingDirectory(
@@ -232,7 +224,7 @@ class ExcelMergeSplitWindow(QWidget):
         if folder:
             self.output_folder = folder
             self.out_folder_label.setText(f"Output folder: {folder}")
-            self.log(f"Output folder set: {folder}")
+            self.progress_logger.log(f"Output folder set: {folder}")
 
     def start_processing(self):
         if not self.file_list_widget.count():
@@ -263,11 +255,11 @@ class ExcelMergeSplitWindow(QWidget):
         if self.chk_merge.isChecked():
             merged_name = self.merge_name_edit.text().strip() or "merged_output.xlsx"
             merged_path = os.path.join(self.output_folder, merged_name)
-            self.log("Starting merge operation in background...")
+            self.progress_logger.log("Starting merge operation in background...")
 
             # Clear progress
-            self.progress.setValue(0)
-            self.progress.setMaximum(len(files))
+            self.progress_logger.set_progress(0)
+            self.progress_logger.set_max_progress(len(files))
 
             # Disable UI during processing
             self.process_btn.setEnabled(False)
@@ -283,10 +275,10 @@ class ExcelMergeSplitWindow(QWidget):
         # Split Logic
         if self.chk_split.isChecked():
             total = len(files)
-            self.progress.setMaximum(total)
-            self.progress.setValue(0)
+            self.progress_logger.set_max_progress(total)
+            self.progress_logger.set_progress(0)
             for idx, file_path in enumerate(files, start=1):
-                self.log(f"Splitting: {file_path}")
+                self.progress_logger.log(f"Splitting: {file_path}")
                 try:
                     sheets = read_all_sheets(file_path)
                     base_name = os.path.splitext(
@@ -295,12 +287,12 @@ class ExcelMergeSplitWindow(QWidget):
                         out_name = f"{base_name}__{sheetname[:20]}.xlsx"
                         out_path = os.path.join(self.output_folder, out_name)
                         save_df_to_excel(df, out_path, sheet_name=sheetname)
-                        self.log(f"  Saved sheet: {out_path}")
+                        self.progress_logger.log(f"  Saved sheet: {out_path}")
                 except Exception as e:
-                    self.log(f"Failed to split {file_path}: {e}")
-                self.progress.setValue(idx)
+                    self.progress_logger.log(f"Failed to split {file_path}: {e}")
+                self.progress_logger.set_progress(idx)
 
-        self.log("Processing complete.")
+        self.progress_logger.log("Processing complete.")
         QMessageBox.information(self, "Done", "Processing finished.")
 
     def merge_files(self, files, merged_path):
@@ -322,7 +314,7 @@ class ExcelMergeSplitWindow(QWidget):
                 colsets.append(tuple(df.columns))
                 sheetmaps[f] = sheets
             except Exception as e:
-                self.log(f"Skipping {f} during merge: {e}")
+                self.progress_logger.log(f"Skipping {f} during merge: {e}")
 
         # if all column sets identical, concat
         if len(colsets) >= 1 and all(cs == colsets[0] for cs in colsets):
@@ -348,13 +340,13 @@ class ExcelMergeSplitWindow(QWidget):
     def cancel_processing(self):
         """Cancel the current merge operation."""
         if self.worker and self.worker.isRunning():
-            self.log("Cancelling operation...")
+            self.progress_logger.log("Cancelling operation...")
             self.worker.cancel()
 
     def on_progress_update(self, progress_value, message):
         """Handle progress updates from worker thread."""
-        self.progress.setValue(progress_value)
-        self.log(message)
+        self.progress_logger.set_progress(progress_value)
+        self.progress_logger.log(message)
 
     def on_merge_finished(self, success, message):
         """Handle completion of merge operation."""
@@ -362,18 +354,12 @@ class ExcelMergeSplitWindow(QWidget):
 
         if success:
             QMessageBox.information(self, "Success", message)
-            self.log(f"✓ {message}")
+            self.progress_logger.log(f"✓ {message}")
         else:
             QMessageBox.critical(self, "Error", message)
-            self.log(f"✗ {message}")
+            self.progress_logger.log(f"✗ {message}")
 
     def reset_ui_after_processing(self):
         """Re-enable UI controls after processing completes."""
         self.process_btn.setEnabled(True)
         self.cancel_btn.setEnabled(False)
-
-    def log(self, text):
-        now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        self.log_text.append(f"[{now}] {text}")
-        cursor = self.log_text.textCursor()
-        self.log_text.moveCursor(cursor.End)

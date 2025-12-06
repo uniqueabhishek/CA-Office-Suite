@@ -1,7 +1,6 @@
 import os
 import pdfplumber
 import pandas as pd
-from datetime import datetime
 from PyQt5.QtWidgets import (
     QLabel,
     QPushButton,
@@ -15,10 +14,8 @@ from PyQt5.QtWidgets import (
     QCheckBox,
     QTextEdit,
     QFrame,
-    QProgressBar,
 )
 from PyQt5.QtCore import Qt
-from workers.pdf_worker import PDFWorker
 
 
 class PDFTableExtractor(QWidget):
@@ -27,7 +24,6 @@ class PDFTableExtractor(QWidget):
         self.setWindowTitle("PDF to Excel PRO Tool")
         # self.resize(1600, 800)
         self.checkboxes = []
-        self.worker = None  # Background worker thread
         # self.center_window()
         self.setup_ui()
 
@@ -67,27 +63,7 @@ class PDFTableExtractor(QWidget):
         top_layout.addWidget(self.convert_btn)
         self.convert_btn.setMaximumWidth(160)
 
-        self.cancel_btn = QPushButton("Cancel")
-        self.cancel_btn.clicked.connect(self.cancel_processing)
-        self.cancel_btn.setEnabled(False)
-        top_layout.addWidget(self.cancel_btn)
-        self.cancel_btn.setMaximumWidth(120)
-
         main_layout.addLayout(top_layout)
-
-        # Progress bar
-        self.progress = QProgressBar()
-        self.progress.setValue(0)
-        main_layout.addWidget(self.progress)
-
-        # Log display
-        log_label = QLabel("Processing Log:")
-        main_layout.addWidget(log_label)
-
-        self.log_text = QTextEdit()
-        self.log_text.setReadOnly(True)
-        self.log_text.setMaximumHeight(150)
-        main_layout.addWidget(self.log_text)
 
         # Scroll area
         self.scroll_area = QScrollArea()
@@ -156,28 +132,17 @@ class PDFTableExtractor(QWidget):
                 os.path.dirname(self.pdf_path), base_name + ".xlsx"
             )
 
-            # Clear log and reset progress
-            self.log_text.clear()
-            self.progress.setValue(0)
-            self.progress.setMaximum(len(selected_tables))
+            # Save tables directly
+            self.save_tables_to_excel(selected_tables, output_path)
 
-            # Disable UI during processing
-            self.convert_btn.setEnabled(False)
-            self.cancel_btn.setEnabled(True)
-            self.select_btn.setEnabled(False)
-
-            # Log start
-            self.log(f"Starting extraction of {len(selected_tables)} tables to {output_path}")
-
-            # Create and start worker thread
-            self.worker = PDFWorker(self.pdf_path, selected_tables, output_path)
-            self.worker.progress_update.connect(self.on_progress_update)
-            self.worker.finished.connect(self.on_processing_finished)
-            self.worker.start()
+            QMessageBox.information(
+                self,
+                "Success",
+                f"Excel file created successfully at:\n{output_path}"
+            )
 
         except Exception as e:
             QMessageBox.critical(self, "Error", str(e))
-            self.reset_ui_after_processing()
 
     def extract_tables(self, pdf_path):
         tables = []
@@ -195,40 +160,3 @@ class PDFTableExtractor(QWidget):
             for page_num, table_num, df in tables:
                 sheet_name = f"Page{page_num}_Table{table_num}"
                 df.to_excel(writer, sheet_name=sheet_name, index=False)
-
-    def cancel_processing(self):
-        """Cancel the current PDF extraction operation."""
-        if self.worker and self.worker.isRunning():
-            self.log("Cancelling extraction...")
-            self.worker.cancel()
-
-    def on_progress_update(self, progress_value, message):
-        """Handle progress updates from worker thread."""
-        self.progress.setValue(progress_value)
-        self.log(message)
-
-    def on_processing_finished(self, success, message):
-        """Handle completion of PDF extraction."""
-        self.reset_ui_after_processing()
-
-        if success:
-            QMessageBox.information(self, "Success", message)
-            self.log(f"✓ {message}")
-        else:
-            QMessageBox.critical(self, "Error", message)
-            self.log(f"✗ {message}")
-
-    def reset_ui_after_processing(self):
-        """Re-enable UI controls after processing completes."""
-        self.convert_btn.setEnabled(True)
-        self.cancel_btn.setEnabled(False)
-        self.select_btn.setEnabled(True)
-
-    def log(self, message):
-        """Add a timestamped message to the log."""
-        timestamp = datetime.now().strftime("[%H:%M:%S]")
-        self.log_text.append(f"{timestamp} {message}")
-        # Auto-scroll to bottom
-        scrollbar = self.log_text.verticalScrollBar()
-        if scrollbar is not None:
-            scrollbar.setValue(scrollbar.maximum())
