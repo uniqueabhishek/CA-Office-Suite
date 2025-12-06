@@ -64,6 +64,11 @@ def index():
             flash('Invalid file type.')
             return redirect(request.url)
 
+    # Clear session on GET to ensure fresh UI state
+    if request.method == 'GET':
+        session.pop('current_pdf', None)
+        session.pop('original_filename', None)
+
     return render_template('index.html', active_tab='pdf')
 
 @app.route('/convert', methods=['POST'])
