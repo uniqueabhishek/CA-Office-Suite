@@ -1,5 +1,4 @@
 import os
-import traceback
 import pandas as pd
 from PyQt5 import QtWidgets
 from PyQt5.QtWidgets import (
@@ -22,9 +21,8 @@ from openpyxl.utils.dataframe import dataframe_to_rows
 from openpyxl.styles import Font, PatternFill, Border, Side, Alignment
 
 # Import shared utilities from core modules
-from core.excel_utils import list_excel_files_in_folder, read_file_to_df, read_all_sheets
+from core.excel_utils import list_excel_files_in_folder, read_all_sheets
 from core.excel_writer import save_df_to_excel
-from config.constants import SUPPORTED_EXTENSIONS
 from workers.merge_worker import MergeWorker
 from ui.components import ProgressLogger
 

@@ -5,7 +5,6 @@ Handles PDF table extraction in a separate thread to keep UI responsive.
 """
 
 import pandas as pd
-import pdfplumber
 from workers.base_worker import BaseWorker
 
 

@@ -7,7 +7,6 @@ This worker was originally FileProcessorThread in excel_formatter_tool.py.
 
 import os
 import traceback
-import pandas as pd
 from openpyxl import Workbook
 from openpyxl.utils.dataframe import dataframe_to_rows
 from workers.base_worker import BaseWorker

@@ -1,5 +1,4 @@
 import os
-import traceback
 import pandas as pd
 from PyQt5 import QtWidgets
 
@@ -23,15 +22,12 @@ from PyQt5.QtWidgets import (
 )
 
 # For writing styles and fixing column width
-from openpyxl import Workbook, load_workbook
+from openpyxl import load_workbook
 from openpyxl.utils import get_column_letter
-from openpyxl.utils.dataframe import dataframe_to_rows
 from openpyxl.styles import Font, PatternFill, Border, Side, Alignment
 
 # Import shared utilities from core modules
-from core.excel_utils import list_excel_files_in_folder, read_file_to_df, read_all_sheets
-from core.excel_writer import save_df_to_excel, apply_formatting_to_workbook
-from config.constants import SUPPORTED_EXTENSIONS
+from core.excel_utils import list_excel_files_in_folder, read_file_to_df
 from workers.formatter_worker import FormatterWorker
 from ui.components import ProgressLogger
 
