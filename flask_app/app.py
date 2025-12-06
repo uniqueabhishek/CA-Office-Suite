@@ -36,16 +36,28 @@ def index():
             filename = secure_filename(file.filename)
             unique_filename = f"{uuid.uuid4()}_{filename}"
             file_path = os.path.join(app.config['UPLOAD_FOLDER'], unique_filename)
-            file.save(file_path)
+
+            print(f"DEBUG: Processing upload for {filename}")
             try:
+                print(f"DEBUG: Saving to {file_path}")
+                file.save(file_path)
+
+                print("DEBUG: Extracting tables...")
                 tables = utils.extract_tables_from_pdf(file_path)
+                print(f"DEBUG: Extraction complete. Found {len(tables) if tables else 0} tables.")
+
                 if not tables:
-                    flash('No tables found in the PDF.')
+                    flash('No tables found in the PDF. Is it a scanned image?')
                     return redirect(request.url)
+
                 session['current_pdf'] = unique_filename
                 session['original_filename'] = filename
+                print("DEBUG: Rendering template.")
                 return render_template('select_tables.html', tables=tables, filename=filename, active_tab='pdf')
             except Exception as e:
+                print(f"ERROR: {str(e)}")
+                import traceback
+                traceback.print_exc()
                 flash(f'Error processing PDF: {str(e)}')
                 return redirect(request.url)
         else:
