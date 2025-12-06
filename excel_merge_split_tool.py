@@ -1,11 +1,9 @@
-import sys
 import os
 import traceback
 from datetime import datetime
 import pandas as pd
 from PyQt5 import QtWidgets
 from PyQt5.QtWidgets import (
-    QApplication,
     QWidget,
     QFileDialog,
     QMessageBox,
@@ -30,6 +28,7 @@ from openpyxl.styles import Font, PatternFill, Border, Side, Alignment
 from core.excel_utils import list_excel_files_in_folder, read_file_to_df, read_all_sheets
 from core.excel_writer import save_df_to_excel
 from config.constants import SUPPORTED_EXTENSIONS
+from workers.merge_worker import MergeWorker
 
 # Note: Utility functions list_excel_files_in_folder, read_file_to_df, read_all_sheets,
 # and save_df_to_excel are now imported from core modules above.
@@ -96,6 +95,7 @@ class ExcelMergeSplitWindow(QWidget):
         self.output_folder = None
         # Not used for Merge/Split mostly, but good for Split
         self.overwrite_originals = False
+        self.worker = None  # Background worker thread
 
         self._build_ui()
 
@@ -165,9 +165,21 @@ class ExcelMergeSplitWindow(QWidget):
         process_layout = QVBoxLayout()
         process_group.setLayout(process_layout)
 
+        btn_row = QWidget()
+        btn_layout = QHBoxLayout()
+        btn_row.setLayout(btn_layout)
+        btn_layout.setContentsMargins(0, 0, 0, 0)
+
         self.process_btn = QPushButton("Start Processing")
         self.process_btn.clicked.connect(self.start_processing)
-        process_layout.addWidget(self.process_btn)
+        btn_layout.addWidget(self.process_btn)
+
+        self.cancel_btn = QPushButton("Cancel")
+        self.cancel_btn.clicked.connect(self.cancel_processing)
+        self.cancel_btn.setEnabled(False)
+        btn_layout.addWidget(self.cancel_btn)
+
+        process_layout.addWidget(btn_row)
 
         self.progress = QProgressBar()
         self.progress.setValue(0)
@@ -251,12 +263,22 @@ class ExcelMergeSplitWindow(QWidget):
         if self.chk_merge.isChecked():
             merged_name = self.merge_name_edit.text().strip() or "merged_output.xlsx"
             merged_path = os.path.join(self.output_folder, merged_name)
-            self.log("Starting merge...")
-            try:
-                self.merge_files(files, merged_path)
-                self.log(f"Merged output saved: {merged_path}")
-            except Exception as e:
-                self.log(f"Merge failed: {e}\n{traceback.format_exc()}")
+            self.log("Starting merge operation in background...")
+
+            # Clear progress
+            self.progress.setValue(0)
+            self.progress.setMaximum(len(files))
+
+            # Disable UI during processing
+            self.process_btn.setEnabled(False)
+            self.cancel_btn.setEnabled(True)
+
+            # Create and start worker thread
+            self.worker = MergeWorker(files, merged_path, apply_formatting=True)
+            self.worker.progress_update.connect(self.on_progress_update)
+            self.worker.finished.connect(self.on_merge_finished)
+            self.worker.start()
+            return  # Exit early - worker will handle completion
 
         # Split Logic
         if self.chk_split.isChecked():
@@ -323,19 +345,35 @@ class ExcelMergeSplitWindow(QWidget):
 
         apply_openpyxl_autofit_and_theme(merged_path)
 
+    def cancel_processing(self):
+        """Cancel the current merge operation."""
+        if self.worker and self.worker.isRunning():
+            self.log("Cancelling operation...")
+            self.worker.cancel()
+
+    def on_progress_update(self, progress_value, message):
+        """Handle progress updates from worker thread."""
+        self.progress.setValue(progress_value)
+        self.log(message)
+
+    def on_merge_finished(self, success, message):
+        """Handle completion of merge operation."""
+        self.reset_ui_after_processing()
+
+        if success:
+            QMessageBox.information(self, "Success", message)
+            self.log(f"✓ {message}")
+        else:
+            QMessageBox.critical(self, "Error", message)
+            self.log(f"✗ {message}")
+
+    def reset_ui_after_processing(self):
+        """Re-enable UI controls after processing completes."""
+        self.process_btn.setEnabled(True)
+        self.cancel_btn.setEnabled(False)
+
     def log(self, text):
         now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         self.log_text.append(f"[{now}] {text}")
         cursor = self.log_text.textCursor()
         self.log_text.moveCursor(cursor.End)
-
-
-def main():
-    app = QApplication(sys.argv)
-    w = ExcelMergeSplitWindow()
-    w.show()
-    sys.exit(app.exec_())
-
-
-if __name__ == "__main__":
-    main()

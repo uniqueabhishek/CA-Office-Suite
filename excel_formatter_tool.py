@@ -1,4 +1,3 @@
-import sys
 import os
 import traceback
 from datetime import datetime
@@ -8,7 +7,6 @@ from PyQt5 import QtWidgets
 # from PyQt5 import QtGui
 
 from PyQt5.QtWidgets import (
-    QApplication,
     QWidget,
     QFileDialog,
     QMessageBox,
@@ -26,7 +24,6 @@ from PyQt5.QtWidgets import (
     QTextEdit,
     QGroupBox,
 )
-from PyQt5.QtCore import QThread, pyqtSignal
 
 # For writing styles and fixing column width
 from openpyxl import Workbook, load_workbook
@@ -38,6 +35,7 @@ from openpyxl.styles import Font, PatternFill, Border, Side, Alignment
 from core.excel_utils import list_excel_files_in_folder, read_file_to_df, read_all_sheets
 from core.excel_writer import save_df_to_excel, apply_formatting_to_workbook
 from config.constants import SUPPORTED_EXTENSIONS
+from workers.formatter_worker import FormatterWorker
 
 # Note: Utility functions list_excel_files_in_folder, read_file_to_df, read_all_sheets,
 # save_df_to_excel, and apply_formatting_to_workbook are now imported from core modules above.
@@ -322,150 +320,7 @@ def apply_all_transformations(df, options):
     return result, conversions, number_format_map
 
 
-# ---------- BACKGROUND PROCESSING THREAD ----------
-class FileProcessorThread(QThread):
-    """
-    Background worker thread for processing Excel files without blocking the UI.
-    Emits signals for progress updates and completion status.
-    """
-    progress_update = pyqtSignal(int, str)  # (progress_value, log_message)
-    finished = pyqtSignal(bool, str)  # (success, final_message)
-
-    def __init__(self, files, options, output_folder, parent=None):
-        super().__init__(parent)
-        self.files = files
-        self.options = options
-        self.output_folder = output_folder
-        self.is_cancelled = False
-
-    def run(self):
-        """Main processing loop running in background thread."""
-        try:
-            total = len(self.files)
-            for idx, file_path in enumerate(self.files, start=1):
-                # Check for cancellation
-                if self.is_cancelled:
-                    self.finished.emit(False, "Processing cancelled by user.")
-                    return
-
-                self.progress_update.emit(idx, f"Processing: {file_path}")
-
-                try:
-                    # Read all sheets
-                    sheets = read_all_sheets(file_path)
-                    processed_sheets = {}
-
-                    for sheetname, df in sheets.items():
-                        # Apply all transformations using optimized pipeline
-                        df_proc, conversions, nf_map = apply_all_transformations(df, self.options)
-                        processed_sheets[sheetname] = (df_proc, nf_map)
-
-                    # Save processed result(s)
-                    if self.output_folder:
-                        # Create same base filename in output folder
-                        base = os.path.basename(file_path)
-                        name, ext = os.path.splitext(base)
-
-                        if ext.lower() == ".csv":
-                            # For CSV: write single sheet
-                            if processed_sheets:
-                                df_proc, nf_map = list(processed_sheets.values())[0]
-                                out_path = os.path.join(self.output_folder, base)
-                                df_proc.to_csv(out_path, index=False)
-                                self.progress_update.emit(idx, f"Saved CSV: {out_path}")
-                        else:
-                            # Create workbook with sheets
-                            out_path = os.path.join(
-                                self.output_folder,
-                                base if base.lower().endswith(".xlsx") else name + ".xlsx"
-                            )
-                            wb = Workbook()
-                            # Remove default sheet
-                            if wb.active is not None:
-                                wb.remove(wb.active)
-
-                            for sheetname, (df_proc, _) in processed_sheets.items():
-                                ws = wb.create_sheet(title=sheetname[:31])
-                                # Use fast dataframe_to_rows instead of slow iterrows
-                                for row in dataframe_to_rows(df_proc, index=False, header=True):
-                                    ws.append(row)
-
-                            # Apply formatting in memory BEFORE saving (50% less I/O)
-                            if (
-                                self.options.get('apply_autofit', False)
-                                or self.options.get('apply_number_format', False)
-                                or self.options.get('apply_theme', False)
-                            ):
-                                # Build merged number_format_map across sheets
-                                merged_nf = {}
-                                for _, nfmap in processed_sheets.values():
-                                    if nfmap:
-                                        merged_nf.update(nfmap)
-                                # Apply formatting to workbook in memory
-                                apply_formatting_to_workbook(
-                                    wb,
-                                    number_format_map=merged_nf,
-                                    apply_theme=self.options.get('apply_theme', False),
-                                    apply_autofit=self.options.get('apply_autofit', False)
-                                )
-
-                            # Single save operation
-                            wb.save(out_path)
-                            self.progress_update.emit(idx, f"Saved workbook: {out_path}")
-                    else:
-                        # Overwrite original file
-                        if file_path.lower().endswith(".csv"):
-                            if processed_sheets:
-                                df_proc, nf_map = list(processed_sheets.values())[0]
-                                df_proc.to_csv(file_path, index=False)
-                                self.progress_update.emit(idx, f"Overwrote CSV: {file_path}")
-                        else:
-                            wb = Workbook()
-                            if wb.active is not None:
-                                wb.remove(wb.active)
-
-                            for sheetname, (df_proc, _) in processed_sheets.items():
-                                ws = wb.create_sheet(title=sheetname[:31])
-                                # Use fast dataframe_to_rows instead of slow iterrows
-                                for row in dataframe_to_rows(df_proc, index=False, header=True):
-                                    ws.append(row)
-
-                            # Apply formatting in memory BEFORE saving
-                            if (
-                                self.options.get('apply_autofit', False)
-                                or self.options.get('apply_number_format', False)
-                                or self.options.get('apply_theme', False)
-                            ):
-                                merged_nf = {}
-                                for _, nfmap in processed_sheets.values():
-                                    if nfmap:
-                                        merged_nf.update(nfmap)
-                                apply_formatting_to_workbook(
-                                    wb,
-                                    number_format_map=merged_nf,
-                                    apply_theme=self.options.get('apply_theme', False),
-                                    apply_autofit=self.options.get('apply_autofit', False)
-                                )
-
-                            # Single save operation
-                            wb.save(file_path)
-                            self.progress_update.emit(idx, f"Overwrote workbook: {file_path}")
-
-                except Exception as e:
-                    error_msg = f"Error processing {file_path}: {e}"
-                    self.progress_update.emit(idx, error_msg)
-                    self.progress_update.emit(idx, f"Traceback:\n{traceback.format_exc()}")
-
-            # All files processed successfully
-            self.finished.emit(True, f"All {total} files processed successfully.")
-
-        except Exception as e:
-            # Unexpected error in thread
-            self.finished.emit(False, f"Unexpected error: {e}\n{traceback.format_exc()}")
-
-    def cancel(self):
-        """Request cancellation of processing."""
-        self.is_cancelled = True
+# Note: FileProcessorThread has been moved to workers/formatter_worker.py as FormatterWorker
 
 
 # ---------- GUI ----------
@@ -858,7 +713,7 @@ class ExcelCleanerWindow(QWidget):
         self.progress.setValue(0)
 
         # Create and start worker thread
-        self.worker = FileProcessorThread(files, options, self.output_folder, self)
+        self.worker = FormatterWorker(files, options, self.output_folder, apply_all_transformations, self)
         self.worker.progress_update.connect(self.on_progress_update)
         self.worker.finished.connect(self.on_processing_finished)
         self.worker.start()
@@ -903,17 +758,3 @@ class ExcelCleanerWindow(QWidget):
         scrollbar = self.log_text.verticalScrollBar()
         if scrollbar is not None:
             scrollbar.setValue(scrollbar.maximum())
-
-
-def main():
-    app = QApplication(sys.argv)
-    ex = ExcelCleanerWindow()
-    ex.show()
-    sys.exit(app.exec_())
-
-
-if __name__ == "__main__":
-    # Removed the incorrect standalone auto-fit logic here.
-    # This section of the script should only contain the
-    # entry point for the GUI.
-    main()
