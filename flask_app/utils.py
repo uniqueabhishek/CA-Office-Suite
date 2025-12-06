@@ -142,7 +142,7 @@ def extract_tables_from_pdf(pdf_path):
         for i, page in enumerate(pdf.pages):
             page_tables = page.extract_tables()
             for j, table in enumerate(page_tables):
-                if table and len(table) > 1:
+                if table:
                     headers = table[0]
                     seen = {}
                     new_headers = []
