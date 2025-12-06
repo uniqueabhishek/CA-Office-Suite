@@ -5,16 +5,25 @@
 <form action="{{ url_for('index') }}" method="post" enctype="multipart/form-data">
     <div class="group-box" style="margin-top: 0;">
         <span class="group-title">PDF Extraction</span>
-        <div style="display: flex; gap: 10px;">
-            <input type="file" name="file" class="form-control" style="margin-bottom: 0;" accept=".pdf" placeholder="Select a PDF file to extract tables">
-            <button type="submit" class="btn btn-primary">Load PDF Tables</button>
+        <div style="display: flex; gap: 10px; align-items: center;">
+            <!-- Hidden file input that auto-submits on change -->
+            <input type="file" id="pdf_upload" name="file" accept=".pdf" style="display: none;" onchange="this.form.submit()">
+
+            <!-- Visible button that triggers the hidden input -->
+            <button type="button" class="btn btn-primary" onclick="document.getElementById('pdf_upload').click();">
+                Load PDF
+            </button>
+
+            <span style="color: #666; font-size: 0.9em; margin-left: 10px;">
+                (Select a PDF to automatically extract tables)
+            </span>
         </div>
     </div>
 
     <div class="right-panel" style="background: #f9f9f9; border: 1px solid #ddd; height: 500px; display: flex; align-items: center; justify-content: center; color: #aaa;">
         <!-- Placeholder for where table selection would go -->
         {% if not session.get('current_pdf') %}
-            <div>No PDF loaded. Upload a file above to begin.</div>
+            <div>Click "Load PDF" to begin.</div>
         {% else %}
             <!-- If we were reloading this page with state, we'd show tables here -->
             <div>PDF Loaded: {{ session.get('original_filename') }} (Control moved to select_tables step)</div>
