@@ -1,0 +1,149 @@
+{% extends "balance_sheet/wrapper.html" %}
+
+{% block balance_sheet_content %}
+<div class="card mb-4">
+    <div class="card-header bg-primary text-white">
+        <h5 class="mb-0">Schedule I: Accumulation of Income</h5>
+    </div>
+    <div class="card-body">
+        <form method="POST">
+            <div class="table-responsive">
+                <table class="table table-bordered table-striped custom-input-table">
+                    <thead class="table-dark text-center align-middle">
+                        <tr>
+                            <th rowspan="2" style="width: 80px;">Financial Year</th>
+                            <th rowspan="2">Amount accumulated in the year of accumulation</th>
+                            <th rowspan="2">Purpose</th>
+                            <th rowspan="2">Application for specified purpose in earlier years</th>
+                            <th rowspan="2">Amount taxed in earlier years^</th>
+                            <th colspan="2">Applied in the Current year</th>
+                            <th rowspan="2">Credited to other regd. Trust / Institution</th>
+                            <th rowspan="2">Balance</th>
+                            <th colspan="2">Amount Invested</th>
+                            <th rowspan="2">Amount not utilised during accumulation period</th>
+                            <th rowspan="2">Deemed Income u/s 11(3)</th>
+                        </tr>
+                        <tr>
+                            <th>For specified purpose</th>
+                            <th>For other than specified purpose</th>
+                            <th>As per Sec.11(5)</th>
+                            <th>Other modes</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% set years = ['2018-17', '2017-18', '2018-19', '2019-20', '2020-21', '2021-22', '2022-23'] %}
+                        {% for year in years %}
+                        <tr>
+                            <td class="fw-bold">{{ year }}</td>
+                            <td><input type="number" step="0.01" class="form-control form-control-sm text-end calc-field" name="accumulated_{{ loop.index }}" value="{{ data.get('accumulated_' ~ loop.index, '') }}"></td>
+                            <td><input type="text" class="form-control form-control-sm" name="purpose_{{ loop.index }}" value="{{ data.get('purpose_' ~ loop.index, '') }}"></td>
+                            <td><input type="number" step="0.01" class="form-control form-control-sm text-end calc-field" name="applied_earlier_{{ loop.index }}" value="{{ data.get('applied_earlier_' ~ loop.index, '') }}"></td>
+                            <td><input type="number" step="0.01" class="form-control form-control-sm text-end calc-field" name="taxed_earlier_{{ loop.index }}" value="{{ data.get('taxed_earlier_' ~ loop.index, '') }}"></td>
+                            <td><input type="number" step="0.01" class="form-control form-control-sm text-end calc-field" name="applied_curr_spec_{{ loop.index }}" value="{{ data.get('applied_curr_spec_' ~ loop.index, '') }}"></td>
+                            <td><input type="number" step="0.01" class="form-control form-control-sm text-end calc-field" name="applied_curr_other_{{ loop.index }}" value="{{ data.get('applied_curr_other_' ~ loop.index, '') }}"></td>
+                            <td><input type="number" step="0.01" class="form-control form-control-sm text-end calc-field" name="credited_other_{{ loop.index }}" value="{{ data.get('credited_other_' ~ loop.index, '') }}"></td>
+                            <td><input type="number" step="0.01" class="form-control form-control-sm text-end fw-bold bg-light" name="balance_{{ loop.index }}" readonly></td>
+                            <td><input type="number" step="0.01" class="form-control form-control-sm text-end" name="invested_11_5_{{ loop.index }}" value="{{ data.get('invested_11_5_' ~ loop.index, '') }}"></td>
+                            <td><input type="number" step="0.01" class="form-control form-control-sm text-end" name="invested_other_{{ loop.index }}" value="{{ data.get('invested_other_' ~ loop.index, '') }}"></td>
+                            <td><input type="number" step="0.01" class="form-control form-control-sm text-end" name="not_utilised_{{ loop.index }}" value="{{ data.get('not_utilised_' ~ loop.index, '') }}"></td>
+                            <td><input type="number" step="0.01" class="form-control form-control-sm text-end" name="deemed_income_{{ loop.index }}" value="{{ data.get('deemed_income_' ~ loop.index, '') }}"></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                    <tfoot class="table-light fw-bold">
+                        <tr>
+                            <td>Total</td>
+                            <td class="text-end" id="total_accumulated">0.00</td>
+                            <td></td>
+                            <td class="text-end" id="total_applied_earlier">0.00</td>
+                            <td class="text-end" id="total_taxed_earlier">0.00</td>
+                            <td class="text-end" id="total_applied_curr_spec">0.00</td>
+                            <td class="text-end" id="total_applied_curr_other">0.00</td>
+                            <td class="text-end" id="total_credited_other">0.00</td>
+                            <td class="text-end" id="total_balance">0.00</td>
+                            <td class="text-end" id="total_invested_11_5">0.00</td>
+                            <td class="text-end" id="total_invested_other">0.00</td>
+                            <td class="text-end" id="total_not_utilised">0.00</td>
+                            <td class="text-end" id="total_deemed_income">0.00</td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+
+            <div class="row mt-3">
+                <div class="col-md-12">
+                     <label class="form-label fw-bold">^Accumulated income taxed u/s 11(3) in earlier years:</label>
+                     <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="radio" name="taxed_us_11_3" id="taxed_yes" value="yes" {% if data.get('taxed_us_11_3') == 'yes' %}checked{% endif %}>
+                        <label class="form-check-label" for="taxed_yes">Yes</label>
+                    </div>
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="radio" name="taxed_us_11_3" id="taxed_no" value="no" {% if data.get('taxed_us_11_3') != 'yes' %}checked{% endif %}>
+                        <label class="form-check-label" for="taxed_no">No</label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-4 d-flex justify-content-between">
+                <a href="{{ url_for('balance_sheet.page_corpus') }}" class="btn btn-secondary">Back</a>
+                <button type="submit" class="btn btn-success">Save & Finish</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const rows = document.querySelectorAll('tbody tr');
+
+        function calculateRow(row) {
+            const getVal = (name) => parseFloat(row.querySelector(`[name^="${name}"]`).value) || 0;
+
+            // Formula for Balance:
+            // Balance seems to be: Accumulated - (Applied earlier + Taxed earlier + Applied current spec + Applied current other + Credited other)
+            // Or typically: Opening (Accumulated) - Applications
+
+            const accumulated = getVal('accumulated');
+            const appliedEq = getVal('applied_earlier') + getVal('taxed_earlier')
+                            + getVal('applied_curr_spec') + getVal('applied_curr_other')
+                            + getVal('credited_other');
+
+            const balance = accumulated - appliedEq;
+            row.querySelector(`[name^="balance"]`).value = balance.toFixed(2);
+        }
+
+        function calculateTotals() {
+            // Helper to sum columns by name prefix
+            const sumCol = (prefix) => {
+                let total = 0;
+                document.querySelectorAll(`[name^="${prefix}"]`).forEach(inp => {
+                    total += parseFloat(inp.value) || 0;
+                });
+                const totalEl = document.getElementById(`total_${prefix}`);
+                if(totalEl) totalEl.textContent = total.toFixed(2);
+            };
+
+            const prefixes = [
+                'accumulated', 'applied_earlier', 'taxed_earlier',
+                'applied_curr_spec', 'applied_curr_other', 'credited_other',
+                'balance', 'invested_11_5', 'invested_other',
+                'not_utilised', 'deemed_income'
+            ];
+
+            prefixes.forEach(p => sumCol(p));
+        }
+
+        document.querySelectorAll('.calc-field').forEach(input => {
+            input.addEventListener('input', function() {
+                 const row = this.closest('tr');
+                 calculateRow(row);
+                 calculateTotals();
+            });
+        });
+
+        // Initial calc
+        rows.forEach(calculateRow);
+        calculateTotals();
+    });
+</script>
+{% endblock %}

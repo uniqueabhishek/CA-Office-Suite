@@ -1,0 +1,15 @@
+{% extends "balance_sheet/wrapper.html" %}
+
+{% block balance_sheet_content %}
+    <ul class="list-group list-group-flush lead">
+        <li class="list-group-item"><a href="{{ url_for('balance_sheet.page1') }}" class="text-decoration-none">Page 1 (Schedules 1-4)</a></li>
+        <li class="list-group-item"><a href="{{ url_for('balance_sheet.page2') }}" class="text-decoration-none">Page 2 (Schedules 8-13)</a></li>
+        <li class="list-group-item"><a href="{{ url_for('balance_sheet.page3') }}" class="text-decoration-none">Page 3 (Investments)</a></li>
+        <li class="list-group-item"><a href="{{ url_for('balance_sheet.page4') }}" class="text-decoration-none">Page 4 (Assets)</a></li>
+        <li class="list-group-item"><a href="{{ url_for('balance_sheet.page4c') }}" class="text-decoration-none">Page 4C (Contribution)</a></li>
+        <li class="list-group-item"><a href="{{ url_for('balance_sheet.page4d') }}" class="text-decoration-none">Page 4D (History)</a></li>
+        <li class="list-group-item"><a href="{{ url_for('balance_sheet.page_winman') }}" class="text-decoration-none">Winman</a></li>
+        <li class="list-group-item"><a href="{{ url_for('balance_sheet.page_corpus') }}" class="text-decoration-none">Corpus Fund</a></li>
+        <li class="list-group-item"><a href="{{ url_for('balance_sheet.page_accumulation') }}" class="text-decoration-none">Accumulation</a></li>
+    </ul>
+{% endblock %}

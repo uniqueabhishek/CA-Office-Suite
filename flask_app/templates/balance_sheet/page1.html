@@ -1,0 +1,307 @@
+{% extends "balance_sheet/wrapper.html" %}
+
+{% block balance_sheet_content %}
+<!-- Inject Bootstrap 5 & Fonts for this page -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+    /* Scoped minimalist/premium styles to avoid breaking global nav */
+    .bs-page {
+        font-family: 'Inter', sans-serif;
+        color: #333;
+        background-color: transparent; /* Use wrapper bg */
+    }
+
+    .premium-card {
+        border: none;
+        border-radius: 12px;
+        background: #fff;
+        box-shadow: 0 4px 24px rgba(0,0,0,0.06);
+        overflow: hidden;
+        margin-bottom: 2.5rem !important; /* Proper spacing */
+    }
+
+    .premium-header {
+        background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+        color: #fff;
+        padding: 1rem 1.5rem;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+        font-size: 1.1rem;
+        border-bottom: none;
+    }
+
+    .premium-table thead th {
+        background-color: #f8f9fa;
+        color: #6c757d;
+        font-weight: 600;
+        text-transform: uppercase;
+        font-size: 0.85rem;
+        border-bottom: 1px solid #e9ecef;
+    }
+
+    .premium-table td {
+        vertical-align: middle;
+        padding: 0.75rem 1rem;
+        font-size: 0.95rem;
+        border-color: #f1f3f5;
+    }
+
+    /* Seamless inputs */
+    .input-seamless {
+        background: transparent;
+        border: 1px solid transparent;
+        border-bottom: 1px solid #dee2e6;
+        border-radius: 0;
+        padding: 0.25rem 0.5rem;
+        font-weight: 500;
+        transition: all 0.2s ease;
+    }
+
+    .input-seamless:focus {
+        background: #f8faff;
+        border-bottom-color: #2a5298;
+        box-shadow: none;
+    }
+
+    .amount-col {
+        width: 160px;
+    }
+
+    .read-only-total {
+        background-color: #fff3cd !important;
+        border: 1px solid #ffeeba !important;
+        border-radius: 4px;
+        color: #856404;
+        font-weight: 700;
+        text-align: right;
+    }
+
+    /* Button Styling */
+    .btn-action {
+        background: #2a5298;
+        color: white;
+        border-radius: 6px;
+        padding: 0.6rem 1.5rem;
+        transition: transform 0.1s ease;
+    }
+    .btn-action:hover {
+        background: #1e3c72;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(42, 82, 152, 0.2);
+    }
+</style>
+
+<div class="bs-page">
+<form method="POST" action="{{ url_for('balance_sheet.page1') }}">
+
+    <!-- SCHEDULE 1 -->
+    <div class="premium-card">
+        <div class="premium-header d-flex justify-content-between align-items-center">
+            <span>SCHEDULE 1: TRUST FUND OR CORPUS</span>
+            <span class="badge bg-white text-dark fs-7 px-3 rounded-pill">Fund Details</span>
+        </div>
+        <div class="card-body p-0">
+            <table class="table premium-table mb-0 table-hover">
+                <tbody>
+                    <tr>
+                        <td class="text-black ps-4">Balance as on 01.04.2023</td>
+                        <td class="text-end amount-col"><input type="number" step="0.01" class="form-control input-seamless text-end sch1_val" name="sch1_opening" value="{{ data.get('sch1_opening', '0.00') }}" oninput="calcSch1()"></td>
+                    </tr>
+                    <tr>
+                        <td class="text-black ps-4">
+                            <div class="d-flex align-items-center">
+                                <span>Add : received in FY</span>
+                                <select class="form-select form-select-sm border-0 shadow-none bg-transparent py-0 w-auto ms-1 fw-medium text-dark" name="sch1_year_1">
+                                    <option>2020-21</option>
+                                    <option selected>2021-22</option>
+                                    <option>2022-23</option>
+                                    <option>2023-24</option>
+                                    <option>2024-25</option>
+                                </select>
+                            </div>
+                        </td>
+                        <td class="text-end"><input type="number" step="0.01" class="form-control input-seamless text-end sch1_val" name="sch1_add_21_22" value="{{ data.get('sch1_add_21_22', '0.00') }}" oninput="calcSch1()"></td>
+                    </tr>
+                    <tr>
+                        <td class="text-black ps-4">
+                            <div class="d-flex align-items-center">
+                                <span>Add : received in FY</span>
+                                <select class="form-select form-select-sm border-0 shadow-none bg-transparent py-0 w-auto ms-1 fw-medium text-dark" name="sch1_year_2">
+                                    <option>2020-21</option>
+                                    <option>2021-22</option>
+                                    <option selected>2022-23</option>
+                                    <option>2023-24</option>
+                                    <option>2024-25</option>
+                                </select>
+                            </div>
+                        </td>
+                        <td class="text-end"><input type="number" step="0.01" class="form-control input-seamless text-end sch1_val" name="sch1_add_22_23" value="{{ data.get('sch1_add_22_23', '0.00') }}" oninput="calcSch1()"></td>
+                    </tr>
+                    <tr>
+                        <td class="text-black ps-4">
+                            <div class="d-flex align-items-center">
+                                <span>Add : received in FY</span>
+                                <select class="form-select form-select-sm border-0 shadow-none bg-transparent py-0 w-auto ms-1 fw-medium text-dark" name="sch1_year_3">
+                                    <option>2020-21</option>
+                                    <option>2021-22</option>
+                                    <option>2022-23</option>
+                                    <option selected>2023-24</option>
+                                    <option>2024-25</option>
+                                </select>
+                            </div>
+                        </td>
+                        <td class="text-end"><input type="number" step="0.01" class="form-control input-seamless text-end sch1_val" name="sch1_add_23_24" value="{{ data.get('sch1_add_23_24', '0.00') }}" oninput="calcSch1()"></td>
+                    </tr>
+                    <tr class="bg-light">
+                        <td class="text-end fw-bold pt-3 pb-3">TOTAL</td>
+                        <td class="pt-3 pb-3"><input type="text" class="form-control form-control-sm read-only-total" id="sch1_total" name="sch1_total" readonly></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- SCHEDULE 2 -->
+    <div class="premium-card">
+        <div class="premium-header">
+            <span>SCHEDULE 2: OTHER EARMARKED FUND</span>
+        </div>
+        <div class="card-body p-0">
+            <table class="table premium-table mb-0 table-hover">
+                <tbody>
+                    <tr>
+                        <td style="width: 50px;" class="text-center text-muted">1</td>
+                        <td>Building Fund (Balance as per Last Balance Sheet)</td>
+                        <td class="text-end amount-col"><input type="number" step="0.01" class="form-control input-seamless text-end" name="sch2_building_fund" value="{{ data.get('sch2_building_fund', '0.00') }}"></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- SCHEDULE 3 -->
+    <div class="premium-card">
+        <div class="premium-header d-flex justify-content-between align-items-center">
+            <span>SCHEDULE 3: LIABILITIES</span>
+            <button type="button" class="btn btn-light btn-sm text-primary fw-bold" onclick="addLiability()">+ Add Row</button>
+        </div>
+        <div class="card-body p-0">
+            <table class="table premium-table mb-0 table-hover" id="sch3_table">
+                <tbody id="sch3_container">
+                    {% set liabilities = data.get('sch3_rows', [
+                        {'particulars': 'TDS Payable', 'amount': '0.00'},
+                        {'particulars': 'Audit Fees Payable', 'amount': '0.00'},
+                        {'particulars': 'Payable to Ashutosh Mate & Associates', 'amount': '0.00'},
+                        {'particulars': 'Sundry Creditors', 'amount': '0.00'}
+                    ]) %}
+                    {% for row in liabilities %}
+                    <tr class="sch3_row">
+                        <td class="ps-4">
+                            <div class="d-flex align-items-center">
+                                <span class="text-muted pe-3" style="min-width: 25px;">{{ loop.index }}</span>
+                                <input type="text" class="form-control input-seamless" name="sch3_particulars[]" value="{{ row.particulars }}">
+                            </div>
+                        </td>
+                        <td class="amount-col">
+                            <div class="d-flex align-items-center">
+                                <input type="number" step="0.01" class="form-control input-seamless text-end sch3_amount" name="sch3_amount[]" value="{{ row.amount }}" oninput="calcSch3()">
+                                {% if loop.index > 4 %}<button type="button" class="btn btn-link text-danger p-0 ms-2" onclick="this.closest('tr').remove(); calcSch3()">&times;</button>{% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                    <tr class="bg-light fw-bold">
+                        <td class="text-end pt-3 pb-3">GRAND TOTAL (Rs.)</td>
+                        <td class="pt-3 pb-3"><input type="text" class="form-control form-control-sm read-only-total" id="sch3_total" name="sch3_total" readonly></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- SCHEDULE 4 -->
+    <div class="premium-card">
+        <div class="premium-header">
+            <span>SCHEDULE 4: INCOME & EXPENDITURE ACCOUNT</span>
+        </div>
+        <div class="card-body p-0">
+            <table class="table premium-table mb-0 table-hover">
+                <tbody>
+                    <tr>
+                        <td class="ps-4">Balance as per Balance Sheet</td>
+                        <td class="text-end amount-col"><input type="number" step="0.01" class="form-control input-seamless text-end sch4_val" name="sch4_opening" value="{{ data.get('sch4_opening', '0.00') }}" oninput="calcSch4()"></td>
+                    </tr>
+                    <tr>
+                        <td class="ps-4">Less : Deficit for the year transferred from I&E (Use negative for less)</td>
+                        <td class="text-end"><input type="number" step="0.01" class="form-control input-seamless text-end sch4_val" name="sch4_transfer" value="{{ data.get('sch4_transfer', '0.00') }}" oninput="calcSch4()"></td>
+                    </tr>
+                    <tr class="bg-light fw-bold">
+                        <td class="text-end pt-3 pb-3">BALANCE AS ON 31.03.2024</td>
+                        <td class="pt-3 pb-3"><input type="text" class="form-control form-control-sm read-only-total" id="sch4_total" name="sch4_total" readonly></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="d-flex justify-content-end mt-5 mb-5 pb-5">
+        <button type="submit" class="btn btn-action shadow">Save & Next (Page 2) &rarr;</button>
+    </div>
+</form>
+</div>
+
+<script>
+function calcSch1() {
+    let total = 0;
+    document.querySelectorAll('.sch1_val').forEach(i => total += parseFloat(i.value) || 0);
+    document.getElementById('sch1_total').value = total.toFixed(2);
+}
+
+function calcSch3() {
+    let total = 0;
+    document.querySelectorAll('.sch3_amount').forEach(i => total += parseFloat(i.value) || 0);
+    document.getElementById('sch3_total').value = total.toFixed(2);
+}
+
+function calcSch4() {
+    let opening = parseFloat(document.querySelector('[name="sch4_opening"]').value) || 0;
+    let transfer = parseFloat(document.querySelector('[name="sch4_transfer"]').value) || 0;
+    let total = opening - transfer;
+    document.getElementById('sch4_total').value = total.toFixed(2);
+}
+
+function addLiability() {
+    const container = document.getElementById('sch3_container');
+    const index = container.querySelectorAll('.sch3_row').length + 1;
+    const tr = document.createElement('tr');
+    tr.className = 'sch3_row';
+    tr.innerHTML = `
+        <td class="ps-4">
+            <div class="d-flex align-items-center">
+                <span class="text-muted pe-3" style="min-width: 25px;">${index}</span>
+                <input type="text" class="form-control input-seamless" name="sch3_particulars[]" placeholder="New Liability">
+            </div>
+        </td>
+        <td class="amount-col">
+            <div class="d-flex align-items-center">
+                <input type="number" step="0.01" class="form-control input-seamless text-end sch3_amount" name="sch3_amount[]" value="0.00" oninput="calcSch3()">
+                <button type="button" class="btn btn-link text-danger p-0 ms-2" onclick="this.closest('tr').remove(); calcSch3()">&times;</button>
+            </div>
+        </td>
+    `;
+    const totalRow = container.querySelector('.bg-light');
+    if (totalRow) {
+        container.insertBefore(tr, totalRow);
+    } else {
+        container.appendChild(tr);
+    }
+}
+
+// Init
+calcSch1();
+calcSch3();
+calcSch4();
+</script>
+{% endblock %}

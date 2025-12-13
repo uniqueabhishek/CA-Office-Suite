@@ -1,0 +1,243 @@
+{% extends "balance_sheet/wrapper.html" %}
+
+{% block balance_sheet_content %}
+<form method="POST" action="{{ url_for('balance_sheet.page4') }}" id="assetsForm">
+
+    <!-- SCHEDULE 5 -->
+    <div class="card mb-5">
+        <div class="card-header bg-warning text-dark d-flex justify-content-between align-items-center">
+            <strong>SCHEDULE : 5 IMMOVABLE PROPERTIES</strong>
+            <button type="button" class="btn btn-sm btn-dark" onclick="addRow('sch5')">+ Add Property</button>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-bordered" id="table_sch5">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Particulars</th>
+                        <th style="width: 80px;">Rate %</th>
+                        <th>Op. Bal (01.04.23)</th>
+                        <th>Add < Sep</th>
+                        <th>Add > Sep</th>
+                        <th>Total</th>
+                        <th>Depreciation</th>
+                        <th>Closing (31.03.24)</th>
+                        <th>X</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if data.get('sch5_rows') %}
+                        {% for row in data.get('sch5_rows') %}
+                        <tr>
+                            <td><input type="text" class="form-control form-control-sm" name="sch5_particulars[]" value="{{ row.particulars }}"></td>
+                            <td><input type="number" step="0.01" class="form-control form-control-sm rate" name="sch5_rate[]" value="{{ row.rate }}" oninput="calcRow(this)"></td>
+                            <td><input type="number" step="0.01" class="form-control form-control-sm opening" name="sch5_opening[]" value="{{ row.opening }}" oninput="calcRow(this)"></td>
+                            <td><input type="text" class="form-control form-control-sm add_before" name="sch5_add_before[]" value="{{ row.add_before }}" oninput="calcRow(this)"></td> <!-- text to allow empty or '-' -->
+                            <td><input type="text" class="form-control form-control-sm add_after" name="sch5_add_after[]" value="{{ row.add_after }}" oninput="calcRow(this)"></td>
+                            <td><input type="text" class="form-control form-control-sm total_bal" name="sch5_total[]" value="{{ row.total }}" readonly></td>
+                            <td><input type="text" class="form-control form-control-sm depreciation" name="sch5_dep[]" value="{{ row.dep }}" readonly></td>
+                            <td><input type="text" class="form-control form-control-sm closing" name="sch5_closing[]" value="{{ row.closing }}" readonly></td>
+                            <td><button type="button" class="btn btn-danger btn-sm" onclick="removeRow(this)">X</button></td>
+                        </tr>
+                        {% endfor %}
+                    {% else %}
+                        <!-- Default Rows based on Image Example (Optional, leave 1 blank) -->
+                        <tr>
+                            <td><input type="text" class="form-control form-control-sm" name="sch5_particulars[]" placeholder="Property 1"></td>
+                            <td><input type="number" step="0.01" class="form-control form-control-sm rate" name="sch5_rate[]" value="0.10" oninput="calcRow(this)"></td>
+                            <td><input type="number" step="0.01" class="form-control form-control-sm opening" name="sch5_opening[]" value="0.00" oninput="calcRow(this)"></td>
+                            <td><input type="text" class="form-control form-control-sm add_before" name="sch5_add_before[]" value="" placeholder="-" oninput="calcRow(this)"></td>
+                            <td><input type="text" class="form-control form-control-sm add_after" name="sch5_add_after[]" value="" placeholder="-" oninput="calcRow(this)"></td>
+                            <td><input type="text" class="form-control form-control-sm total_bal" name="sch5_total[]" value="0.00" readonly></td>
+                            <td><input type="text" class="form-control form-control-sm depreciation" name="sch5_dep[]" value="0.00" readonly></td>
+                            <td><input type="text" class="form-control form-control-sm closing" name="sch5_closing[]" value="0.00" readonly></td>
+                            <td><button type="button" class="btn btn-danger btn-sm" onclick="removeRow(this)">X</button></td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+                <tfoot>
+                     <tr class="fw-bold bg-light">
+                        <td colspan="2">Sub-Total A</td>
+                        <td class="sum_opening">0.00</td>
+                        <td class="sum_add_before">0.00</td>
+                        <td class="sum_add_after">0.00</td>
+                        <td class="sum_total">0.00</td>
+                        <td class="sum_dep">0.00</td>
+                        <td class="sum_closing">0.00</td>
+                        <td></td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+
+    <!-- SCHEDULE 7 -->
+    <div class="card mb-5">
+        <div class="card-header bg-warning text-dark d-flex justify-content-between align-items-center">
+            <strong>SCHEDULE : 7 FURNITURE, FIXTURE & OTHER ASSETS</strong>
+            <button type="button" class="btn btn-sm btn-dark" onclick="addRow('sch7')">+ Add Asset</button>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-bordered" id="table_sch7">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Particulars</th>
+                        <th style="width: 80px;">Rate %</th>
+                        <th>Op. Bal (01.04.23)</th>
+                        <th>Add < Sep</th>
+                        <th>Add > Sep</th>
+                        <th>Total</th>
+                        <th>Depreciation</th>
+                        <th>Closing (31.03.24)</th>
+                        <th>X</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if data.get('sch7_rows') %}
+                        {% for row in data.get('sch7_rows') %}
+                        <tr>
+                            <td><input type="text" class="form-control form-control-sm" name="sch7_particulars[]" value="{{ row.particulars }}"></td>
+                            <td><input type="number" step="0.01" class="form-control form-control-sm rate" name="sch7_rate[]" value="{{ row.rate }}" oninput="calcRow(this)"></td>
+                            <td><input type="number" step="0.01" class="form-control form-control-sm opening" name="sch7_opening[]" value="{{ row.opening }}" oninput="calcRow(this)"></td>
+                            <td><input type="text" class="form-control form-control-sm add_before" name="sch7_add_before[]" value="{{ row.add_before }}" oninput="calcRow(this)"></td>
+                            <td><input type="text" class="form-control form-control-sm add_after" name="sch7_add_after[]" value="{{ row.add_after }}" oninput="calcRow(this)"></td>
+                            <td><input type="text" class="form-control form-control-sm total_bal" name="sch7_total[]" value="{{ row.total }}" readonly></td>
+                            <td><input type="text" class="form-control form-control-sm depreciation" name="sch7_dep[]" value="{{ row.dep }}" readonly></td>
+                            <td><input type="text" class="form-control form-control-sm closing" name="sch7_closing[]" value="{{ row.closing }}" readonly></td>
+                            <td><button type="button" class="btn btn-danger btn-sm" onclick="removeRow(this)">X</button></td>
+                        </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td><input type="text" class="form-control form-control-sm" name="sch7_particulars[]" placeholder="Asset 1"></td>
+                            <td><input type="number" step="0.01" class="form-control form-control-sm rate" name="sch7_rate[]" value="0.10" oninput="calcRow(this)"></td>
+                            <td><input type="number" step="0.01" class="form-control form-control-sm opening" name="sch7_opening[]" value="0.00" oninput="calcRow(this)"></td>
+                            <td><input type="text" class="form-control form-control-sm add_before" name="sch7_add_before[]" value="" placeholder="-" oninput="calcRow(this)"></td>
+                            <td><input type="text" class="form-control form-control-sm add_after" name="sch7_add_after[]" value="" placeholder="-" oninput="calcRow(this)"></td>
+                            <td><input type="text" class="form-control form-control-sm total_bal" name="sch7_total[]" value="0.00" readonly></td>
+                            <td><input type="text" class="form-control form-control-sm depreciation" name="sch7_dep[]" value="0.00" readonly></td>
+                            <td><input type="text" class="form-control form-control-sm closing" name="sch7_closing[]" value="0.00" readonly></td>
+                            <td><button type="button" class="btn btn-danger btn-sm" onclick="removeRow(this)">X</button></td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+                <tfoot>
+                     <tr class="fw-bold bg-light">
+                        <td colspan="2">Total</td>
+                        <td class="sum_opening">0.00</td>
+                        <td class="sum_add_before">0.00</td>
+                        <td class="sum_add_after">0.00</td>
+                        <td class="sum_total">0.00</td>
+                        <td class="sum_dep">0.00</td>
+                        <td class="sum_closing">0.00</td>
+                        <td></td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+
+    <div class="d-flex justify-content-between mt-4">
+        <a href="{{ url_for('balance_sheet.page3') }}" class="btn btn-secondary">&larr; Back to Page 3</a>
+        <button type="submit" class="btn btn-primary">Save & Finish</button>
+    </div>
+</form>
+
+<script>
+    function parseVal(val) {
+        if (!val || val === '-') return 0;
+        return parseFloat(val) || 0;
+    }
+
+    function calcRow(input) {
+        const row = input.closest('tr');
+        const rate = parseVal(row.querySelector('.rate').value); // e.g. 0.10 for 10% or is it 10? User input 0.10 based on image column "0.10"
+
+        const open = parseVal(row.querySelector('.opening').value);
+        const addBefore = parseVal(row.querySelector('.add_before').value);
+        const addAfter = parseVal(row.querySelector('.add_after').value);
+
+        // Logic check: Image Rate col says "0.10", "0.00".
+        // Depreciation calculation:
+        // Dept = (Open + AddBefore) * Rate + (AddAfter * Rate / 2)
+        // Wait, standard accounting: Opening gets full dep. Additions < Sep ( > 180 days) get full. Additions > Sep (< 180 days) get half.
+        // So: Dep = (Open * Rate) + (AddBefore * Rate) + (AddAfter * Rate / 2)
+        // Which simplifies to: (Open + AddBefore) * Rate + (AddAfter * Rate * 0.5)
+
+        // Total Balance = Open + AddBefore + AddAfter (Assuming no deletions for simplicity as per image cols)
+        const total = open + addBefore + addAfter;
+
+        let dep = 0;
+        if (rate > 0) {
+            dep = (open * rate) + (addBefore * rate) + (addAfter * rate * 0.5);
+        }
+
+        const closing = total - dep;
+
+        row.querySelector('.total_bal').value = total.toFixed(2);
+        row.querySelector('.depreciation').value = dep.toFixed(2);
+        row.querySelector('.closing').value = closing.toFixed(2);
+
+        calcTableTotals(row.closest('table'));
+    }
+
+    function calcTableTotals(table) {
+        const sums = {
+            opening: 0, add_before: 0, add_after: 0, total: 0, dep: 0, closing: 0
+        };
+
+        table.querySelectorAll('tbody tr').forEach(row => {
+            sums.opening += parseVal(row.querySelector('.opening').value);
+            sums.add_before += parseVal(row.querySelector('.add_before').value);
+            sums.add_after += parseVal(row.querySelector('.add_after').value);
+            sums.total += parseVal(row.querySelector('.total_bal').value);
+            sums.dep += parseVal(row.querySelector('.depreciation').value);
+            sums.closing += parseVal(row.querySelector('.closing').value);
+        });
+
+        const footer = table.querySelector('tfoot');
+        footer.querySelector('.sum_opening').innerText = sums.opening.toFixed(2);
+        footer.querySelector('.sum_add_before').innerText = sums.add_before.toFixed(2);
+        footer.querySelector('.sum_add_after').innerText = sums.add_after.toFixed(2);
+        footer.querySelector('.sum_total').innerText = sums.total.toFixed(2);
+        footer.querySelector('.sum_dep').innerText = sums.dep.toFixed(2);
+        footer.querySelector('.sum_closing').innerText = sums.closing.toFixed(2);
+    }
+
+    function addRow(schType) { // 'sch5' or 'sch7'
+        const table = document.getElementById('table_' + schType);
+        const tbody = table.querySelector('tbody');
+        const newRow = tbody.rows[0].cloneNode(true);
+
+        // Clear inputs
+        newRow.querySelectorAll('input').forEach(i => {
+             // keep name structure ?? name="sch5_particulars[]" logic works with clones
+             if(i.classList.contains('rate')) {
+                 i.value = '0.10'; // default
+             } else {
+                 i.value = '';
+             }
+        });
+
+        // Reset read-only mostly
+        newRow.querySelector('.total_bal').value = '0.00';
+        newRow.querySelector('.depreciation').value = '0.00';
+        newRow.querySelector('.closing').value = '0.00';
+
+        tbody.appendChild(newRow);
+    }
+
+    function removeRow(btn) {
+        const tbody = btn.closest('tbody');
+        if(tbody.rows.length > 1) {
+            const table = btn.closest('table');
+            btn.closest('tr').remove();
+            calcTableTotals(table);
+        } else {
+            alert("At least one row is required.");
+        }
+    }
+
+    // Initial Calc
+    document.querySelectorAll('table').forEach(t => calcTableTotals(t));
+</script>
+{% endblock %}

@@ -60,7 +60,7 @@ body {
 
 .tab-link {
   display: block;
-  padding: 12px 28px;
+  padding: 8px 16px; /* Reduced padding */
   margin-right: 2px;
   background: #e5e5e5;
   color: var(--text-muted);
@@ -68,10 +68,10 @@ body {
   font-weight: 500;
   border-top-left-radius: 6px;
   border-top-right-radius: 6px;
-  min-width: 100px;
+  min-width: auto; /* Allow auto width */
   text-align: center;
   border: 1px solid transparent;
-  width: 130px; /* Match desktop min-width roughly */
+  /* width: 130px; Removed fixed width */
 }
 
 .tab-link:hover {

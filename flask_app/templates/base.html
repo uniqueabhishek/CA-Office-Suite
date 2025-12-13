@@ -30,6 +30,11 @@
                     Merge & Split
                 </a>
             </li>
+            <li>
+                <a href="{{ url_for('balance_sheet.index') }}" class="tab-link {% if 'balance_sheet' in request.endpoint %}active{% endif %}">
+                    Balancesheet Generator
+                </a>
+            </li>
         </ul>
 
         <!-- Content Area -->

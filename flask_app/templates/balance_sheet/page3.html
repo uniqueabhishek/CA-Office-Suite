@@ -1,0 +1,110 @@
+{% extends "balance_sheet/wrapper.html" %}
+
+{% block balance_sheet_content %}
+<form method="POST" action="{{ url_for('balance_sheet.page3') }}" id="investmentForm">
+    <div class="d-flex justify-content-end align-items-center mb-3">
+
+        <button type="button" class="btn btn-sm btn-success" onclick="addRow()">+ Add Investment</button>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-bordered table-striped" id="invTable">
+            <thead class="table-dark">
+                <tr>
+                    <th>Particulars</th>
+                    <th>Opening Bal (01.04.23)</th>
+                    <th>Additions</th>
+                    <th>Deletions</th>
+                    <th>Closing Bal (31.03.2024)</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Existing Data Rows -->
+                {% if data.get('inv_rows') %}
+                    {% for row in data.get('inv_rows') %}
+                    <tr>
+                        <td><input type="text" class="form-control" name="inv_particulars[]" value="{{ row.particulars }}"></td>
+                        <td><input type="number" step="0.01" class="form-control opening" name="inv_opening[]" value="{{ row.opening }}" oninput="calcRow(this)"></td>
+                        <td><input type="number" step="0.01" class="form-control additions" name="inv_additions[]" value="{{ row.additions }}" oninput="calcRow(this)"></td>
+                        <td><input type="number" step="0.01" class="form-control deletions" name="inv_deletions[]" value="{{ row.deletions }}" oninput="calcRow(this)"></td>
+                        <td><input type="number" step="0.01" class="form-control closing" name="inv_closing[]" value="{{ row.closing }}" readonly></td>
+                        <td><button type="button" class="btn btn-danger btn-sm" onclick="removeRow(this)">X</button></td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <!-- Default Empty Row -->
+                    <tr>
+                        <td><input type="text" class="form-control" name="inv_particulars[]" placeholder="e.g. FD with Bank X"></td>
+                        <td><input type="number" step="0.01" class="form-control opening" name="inv_opening[]" value="0.00" oninput="calcRow(this)"></td>
+                        <td><input type="number" step="0.01" class="form-control additions" name="inv_additions[]" value="0.00" oninput="calcRow(this)"></td>
+                        <td><input type="number" step="0.01" class="form-control deletions" name="inv_deletions[]" value="0.00" oninput="calcRow(this)"></td>
+                        <td><input type="number" step="0.01" class="form-control closing" name="inv_closing[]" value="0.00" readonly></td>
+                        <td><button type="button" class="btn btn-danger btn-sm" onclick="removeRow(this)">X</button></td>
+                    </tr>
+                {% endif %}
+            </tbody>
+            <tfoot>
+                <tr class="table-secondary fw-bold">
+                    <td>Total</td>
+                    <td id="totalOpening">0.00</td>
+                    <td id="totalAdditions">0.00</td>
+                    <td id="totalDeletions">0.00</td>
+                    <td id="totalClosing">0.00</td>
+                    <td></td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+
+    <div class="d-flex justify-content-between mt-4">
+        <a href="{{ url_for('balance_sheet.page2') }}" class="btn btn-secondary">&larr; Back to Page 2</a>
+        <button type="submit" class="btn btn-primary">Save & Finish</button>
+    </div>
+</form>
+
+<script>
+    function calcRow(input) {
+        const row = input.closest('tr');
+        const open = parseFloat(row.querySelector('.opening').value) || 0;
+        const add = parseFloat(row.querySelector('.additions').value) || 0;
+        const del = parseFloat(row.querySelector('.deletions').value) || 0;
+        const close = open + add - del;
+        row.querySelector('.closing').value = close.toFixed(2);
+        calcTotals();
+    }
+
+    function calcTotals() {
+        let tOpen = 0, tAdd = 0, tDel = 0, tClose = 0;
+        document.querySelectorAll('#invTable tbody tr').forEach(row => {
+            tOpen += parseFloat(row.querySelector('.opening').value) || 0;
+            tAdd += parseFloat(row.querySelector('.additions').value) || 0;
+            tDel += parseFloat(row.querySelector('.deletions').value) || 0;
+            tClose += parseFloat(row.querySelector('.closing').value) || 0;
+        });
+        document.getElementById('totalOpening').innerText = tOpen.toFixed(2);
+        document.getElementById('totalAdditions').innerText = tAdd.toFixed(2);
+        document.getElementById('totalDeletions').innerText = tDel.toFixed(2);
+        document.getElementById('totalClosing').innerText = tClose.toFixed(2);
+    }
+
+    function addRow() {
+        const tbody = document.querySelector('#invTable tbody');
+        const newRow = tbody.rows[0].cloneNode(true);
+        newRow.querySelectorAll('input').forEach(i => i.value = (i.type==='number' ? '0.00' : ''));
+        tbody.appendChild(newRow);
+    }
+
+    function removeRow(btn) {
+        if(document.querySelectorAll('#invTable tbody tr').length > 1) {
+            btn.closest('tr').remove();
+            calcTotals();
+        } else {
+            alert("At least one row is required.");
+        }
+    }
+
+    // Initial Calc
+    calcTotals();
+</script>
+{% endblock %}

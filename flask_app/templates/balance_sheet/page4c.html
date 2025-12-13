@@ -1,0 +1,242 @@
+{% extends "balance_sheet/wrapper.html" %}
+
+{% block balance_sheet_content %}
+<form method="POST" action="{{ url_for('balance_sheet.page4c') }}" id="contributionForm">
+
+    <div class="card mb-4">
+        <div class="card-header bg-success text-white">
+            <strong>Schedule IXC. (Vide Rule 32) - Statement of income liable to contribution</strong>
+        </div>
+        <div class="card-body">
+            <!-- Header Info -->
+             <div class="row mb-3">
+                <div class="col-md-6">
+                    <label class="form-label">Name of Public Trust</label>
+                    <input type="text" class="form-control" name="trust_name" value="{{ data.get('trust_name', '') }}">
+                </div>
+                 <div class="col-md-6">
+                    <label class="form-label">Year Ending</label>
+                    <input type="date" class="form-control" name="year_ending" value="{{ data.get('year_ending', '2024-03-31') }}">
+                </div>
+            </div>
+             <div class="row mb-3">
+                <div class="col-md-6">
+                    <label class="form-label">Address</label>
+                    <textarea class="form-control" name="address" rows="2">{{ data.get('address', '') }}</textarea>
+                </div>
+                 <div class="col-md-6">
+                    <label class="form-label">Registration No.</label>
+                    <input type="text" class="form-control" name="reg_no" value="{{ data.get('reg_no', '') }}">
+                </div>
+            </div>
+
+            <hr>
+
+            <!-- Table -->
+            <div class="table-responsive">
+                <table class="table table-bordered" id="table_ixc">
+                    <thead class="table-dark">
+                        <tr>
+                            <th style="width: 50px;">Sr.No</th>
+                            <th>Particulars</th>
+                            <th style="width: 150px;">Rs. (Sub)</th>
+                            <th style="width: 150px;">Rs. (Main)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- I Section -->
+                        <tr class="fw-bold bg-light">
+                            <td>I)</td>
+                            <td>INCOME AS SHOWN IN THE INCOME AND EXPENDITURE ACCOUNT (SCHEDULE IX)</td>
+                            <td><input type="number" step="0.01" class="form-control form-control-sm text-end sub-val" name="income_ie_sub" value="{{ data.get('income_ie_sub', '') }}"></td>
+                            <td><input type="number" step="0.01" class="form-control form-control-sm text-end main-val" name="income_ie" value="{{ data.get('income_ie', '0.00') }}" oninput="calcTotals()"></td>
+                        </tr>
+
+                        <!-- II Section -->
+                        <tr class="fw-bold bg-light">
+                            <td>II)</td>
+                            <td colspan="3">ITEMS NOT CHARGABLE TO CONTRIBUTION UNDER SECTION 58 AND RULE 32 :</td>
+                        </tr>
+
+                        <tr>
+                            <td>i)</td>
+                            <td>Donations received from other Public Trusts and Dharmadas.</td>
+                            <td><input type="number" step="0.01" class="form-control form-control-sm text-end sub-val" name="ded_donations_sub" value="{{ data.get('ded_donations_sub', '') }}"></td>
+                            <td><input type="number" step="0.01" class="form-control form-control-sm text-end deduction" name="ded_donations" value="{{ data.get('ded_donations', '0.00') }}" oninput="calcTotals()"></td>
+                        </tr>
+                         <tr>
+                            <td>ii)</td>
+                            <td>Grants Received from Government and Local authorities.</td>
+                            <td><input type="number" step="0.01" class="form-control form-control-sm text-end sub-val" name="ded_grants_sub" value="{{ data.get('ded_grants_sub', '') }}"></td>
+                            <td><input type="number" step="0.01" class="form-control form-control-sm text-end deduction" name="ded_grants" value="{{ data.get('ded_grants', '0.00') }}" oninput="calcTotals()"></td>
+                        </tr>
+                         <tr>
+                            <td>iii)</td>
+                            <td>Interest on Sinking or Depreciation Fund.</td>
+                            <td><input type="number" step="0.01" class="form-control form-control-sm text-end sub-val" name="ded_sinking_sub" value="{{ data.get('ded_sinking_sub', '') }}"></td>
+                            <td><input type="number" step="0.01" class="form-control form-control-sm text-end deduction" name="ded_sinking" value="{{ data.get('ded_sinking', '0.00') }}" oninput="calcTotals()"></td>
+                        </tr>
+                         <tr>
+                            <td>iv)</td>
+                            <td>Amount spent for the purpose of secular education (Schedule 12)</td>
+                            <td><input type="number" step="0.01" class="form-control form-control-sm text-end sub-val" name="ded_secular_sub" value="{{ data.get('ded_secular_sub', '') }}"></td>
+                            <td><input type="number" step="0.01" class="form-control form-control-sm text-end deduction" name="ded_secular" value="{{ data.get('ded_secular', '0.00') }}" oninput="calcTotals()"></td>
+                        </tr>
+                         <tr>
+                            <td>v)</td>
+                            <td>Amount spent for the purpose of medical relief (Schedule 12)</td>
+                            <td><input type="number" step="0.01" class="form-control form-control-sm text-end sub-val" name="ded_medical_sub" value="{{ data.get('ded_medical_sub', '') }}"></td>
+                            <td><input type="number" step="0.01" class="form-control form-control-sm text-end deduction" name="ded_medical" value="{{ data.get('ded_medical', '0.00') }}" oninput="calcTotals()"></td>
+                        </tr>
+                        <tr>
+                            <td>vi)</td>
+                            <td>Amount spent for the purpose of veterinary treatment of animals.</td>
+                             <td><input type="number" step="0.01" class="form-control form-control-sm text-end sub-val" name="ded_vet_sub" value="{{ data.get('ded_vet_sub', '') }}"></td>
+                            <td><input type="number" step="0.01" class="form-control form-control-sm text-end deduction" name="ded_vet" value="{{ data.get('ded_vet', '0.00') }}" oninput="calcTotals()"></td>
+                        </tr>
+                        <tr>
+                            <td>vii)</td>
+                            <td>Expenditure incurred from donations for relief of distress (scarcity, drought, etc.)</td>
+                             <td><input type="number" step="0.01" class="form-control form-control-sm text-end sub-val" name="ded_distress_sub" value="{{ data.get('ded_distress_sub', '') }}"></td>
+                            <td><input type="number" step="0.01" class="form-control form-control-sm text-end deduction" name="ded_distress" value="{{ data.get('ded_distress', '0.00') }}" oninput="calcTotals()"></td>
+                        </tr>
+
+                        <!-- Agricultural -->
+                        <tr>
+                            <td>viii)</td>
+                            <td>Deductions out or income from lands used for agricultural purpose:-</td>
+                            <td colspan="2"></td>
+                        </tr>
+                        <tr>
+                            <td>a)</td>
+                            <td>Land Revenue and Local Fund Cess</td>
+                             <td><input type="number" step="0.01" class="form-control form-control-sm text-end sub-val" name="ded_land_rev_sub" value="{{ data.get('ded_land_rev_sub', '') }}"></td>
+                            <td><input type="number" step="0.01" class="form-control form-control-sm text-end deduction" name="ded_land_rev" value="{{ data.get('ded_land_rev', '0.00') }}" oninput="calcTotals()"></td>
+                        </tr>
+                         <tr>
+                            <td>b)</td>
+                            <td>Rent payable to superior landlord</td>
+                             <td><input type="number" step="0.01" class="form-control form-control-sm text-end sub-val" name="ded_land_rent_sub" value="{{ data.get('ded_land_rent_sub', '') }}"></td>
+                            <td><input type="number" step="0.01" class="form-control form-control-sm text-end deduction" name="ded_land_rent" value="{{ data.get('ded_land_rent', '0.00') }}" oninput="calcTotals()"></td>
+                        </tr>
+                        <tr>
+                            <td>c)</td>
+                            <td>Cost of production, if lands are cultivated by trust</td>
+                             <td><input type="number" step="0.01" class="form-control form-control-sm text-end sub-val" name="ded_land_prod_sub" value="{{ data.get('ded_land_prod_sub', '') }}"></td>
+                            <td><input type="number" step="0.01" class="form-control form-control-sm text-end deduction" name="ded_land_prod" value="{{ data.get('ded_land_prod', '0.00') }}" oninput="calcTotals()"></td>
+                        </tr>
+
+                         <!-- Non-Agricultural -->
+                        <tr>
+                            <td>ix)</td>
+                            <td>Deductions out of income from lands used for non agricultural purposes:-</td>
+                            <td colspan="2"></td>
+                        </tr>
+                         <tr>
+                            <td>a)</td>
+                            <td>Assessment Cesses and other Government or Municipal taxes</td>
+                             <td><input type="number" step="0.01" class="form-control form-control-sm text-end sub-val" name="ded_na_tax_sub" value="{{ data.get('ded_na_tax_sub', '') }}"></td>
+                            <td><input type="number" step="0.01" class="form-control form-control-sm text-end deduction" name="ded_na_tax" value="{{ data.get('ded_na_tax', '0.00') }}" oninput="calcTotals()"></td>
+                        </tr>
+                        <tr>
+                            <td>b)</td>
+                            <td>Ground rent payable to the superior landlord</td>
+                            <td><input type="number" step="0.01" class="form-control form-control-sm text-end sub-val" name="ded_na_ground_rent_sub" value="{{ data.get('ded_na_ground_rent_sub', '') }}"></td>
+                            <td><input type="number" step="0.01" class="form-control form-control-sm text-end deduction" name="ded_na_ground_rent" value="{{ data.get('ded_na_ground_rent', '0.00') }}" oninput="calcTotals()"></td>
+                        </tr>
+                        <tr>
+                            <td>c)</td>
+                            <td>Insurance premia</td>
+                            <td><input type="number" step="0.01" class="form-control form-control-sm text-end sub-val" name="ded_na_insurance_sub" value="{{ data.get('ded_na_insurance_sub', '') }}"></td>
+                            <td><input type="number" step="0.01" class="form-control form-control-sm text-end deduction" name="ded_na_insurance" value="{{ data.get('ded_na_insurance', '0.00') }}" oninput="calcTotals()"></td>
+                        </tr>
+                        <tr>
+                            <td>d)</td>
+                            <td>Repairs at 10% of gross rent of building</td>
+                            <td><input type="number" step="0.01" class="form-control form-control-sm text-end sub-val" name="ded_na_repairs_sub" value="{{ data.get('ded_na_repairs_sub', '') }}"></td>
+                            <td><input type="number" step="0.01" class="form-control form-control-sm text-end deduction" name="ded_na_repairs" value="{{ data.get('ded_na_repairs', '0.00') }}" oninput="calcTotals()"></td>
+                        </tr>
+                        <tr>
+                            <td>e)</td>
+                            <td>Cost of collection at 4% of gross rent of building let out.</td>
+                             <td><input type="number" step="0.01" class="form-control form-control-sm text-end sub-val" name="ded_na_collection_sub" value="{{ data.get('ded_na_collection_sub', '') }}"></td>
+                            <td><input type="number" step="0.01" class="form-control form-control-sm text-end deduction" name="ded_na_collection" value="{{ data.get('ded_na_collection', '0.00') }}" oninput="calcTotals()"></td>
+                        </tr>
+
+                        <tr>
+                            <td>x)</td>
+                            <td>Cost of collection of income or receipts from securities, stocks etc. at 1% of such income.</td>
+                             <td><input type="number" step="0.01" class="form-control form-control-sm text-end sub-val" name="ded_security_collection_sub" value="{{ data.get('ded_security_collection_sub', '') }}"></td>
+                            <td><input type="number" step="0.01" class="form-control form-control-sm text-end deduction" name="ded_security_collection" value="{{ data.get('ded_security_collection', '0.00') }}" oninput="calcTotals()"></td>
+                        </tr>
+                         <tr>
+                            <td>xi)</td>
+                            <td>Deductions on account of repairs in respect of building not rented and yielding no income at 10% of the estimates gross annual rent</td>
+                             <td><input type="number" step="0.01" class="form-control form-control-sm text-end sub-val" name="ded_repairs_10_sub" value="{{ data.get('ded_repairs_10_sub', '') }}"></td>
+                            <td><input type="number" step="0.01" class="form-control form-control-sm text-end deduction" name="ded_repairs_10" value="{{ data.get('ded_repairs_10', '0.00') }}" oninput="calcTotals()"></td>
+                        </tr>
+
+                        <!-- Totals -->
+                        <tr class="fw-bold fs-5">
+                            <td colspan="2" class="text-end">Gross Annual income chargeable to contribution</td>
+                             <td></td>
+                            <td class="bg-warning text-end" id="gross_annual_income">0.00</td>
+                        </tr>
+                         <tr>
+                            <td colspan="2" class="text-end">Contribution payable (approx 2%?)</td>
+                             <td></td>
+                            <td><input type="text" class="form-control form-control-sm text-end fw-bold" name="contribution_payable" id="contribution_payable" value="{{ data.get('contribution_payable', '') }}" readonly></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+             <div class="row mt-4">
+                 <div class="col-12 text-center text-muted">
+                     <p>Certified that while claiming deductions admissible under the above Schedule, the Trust has not claimed any amount twice, either wholly or partly, against any of the items mentioned in the Schedule which have the effect of double-deduction.</p>
+                 </div>
+                 <div class="col-6 mt-4 fw-bold">TRUSTEES</div>
+                 <div class="col-6 mt-4 text-end fw-bold">CHARTERED ACCOUNTANTS</div>
+             </div>
+        </div>
+    </div>
+
+    <div class="d-flex justify-content-between mt-4">
+        <a href="{{ url_for('balance_sheet.page4') }}" class="btn btn-secondary">&larr; Back to Page 4</a>
+        <button type="submit" class="btn btn-primary">Save & Finish</button>
+    </div>
+</form>
+
+<script>
+    function parseVal(selector) {
+        val = document.querySelector(selector).value;
+        return parseFloat(val) || 0;
+    }
+
+    function parseEl(el) {
+        return parseFloat(el.value) || 0;
+    }
+
+    function calcTotals() {
+        const income = parseVal('[name="income_ie"]');
+        let totalDed = 0;
+
+        document.querySelectorAll('.deduction').forEach(el => {
+            totalDed += parseEl(el);
+        });
+
+        const gross = income - totalDed;
+        document.getElementById('gross_annual_income').innerText = gross.toFixed(2);
+
+        if (gross > 0) {
+            const payable = gross * 0.02;
+            document.getElementById('contribution_payable').value = payable.toFixed(0);
+        } else {
+             document.getElementById('contribution_payable').value = '0';
+        }
+    }
+
+    // Initial Calc
+    calcTotals();
+</script>
+{% endblock %}

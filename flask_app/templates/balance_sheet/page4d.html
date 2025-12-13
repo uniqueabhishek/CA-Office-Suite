@@ -1,0 +1,171 @@
+{% extends "balance_sheet/wrapper.html" %}
+
+{% block balance_sheet_content %}
+<form method="POST" action="{{ url_for('balance_sheet.page4d') }}" id="auditorForm">
+
+    <div class="card mb-4">
+        <div class="card-header bg-info text-white">
+            <strong>SCHEDULE IX - D [See rule 19 (2A)]</strong>
+            <br>
+            <small>Information to be submitted by the Auditor along with Audit Report</small>
+        </div>
+        <div class="card-body">
+             <!-- Top Info -->
+             <div class="row mb-3">
+                <div class="col-md-6">
+                    <label class="form-label">Name of the Trust</label>
+                    <input type="text" class="form-control" name="trust_name" value="{{ data.get('trust_name', '') }}">
+                </div>
+                 <div class="col-md-6">
+                    <label class="form-label">Registration No.</label>
+                    <input type="text" class="form-control" name="reg_no" value="{{ data.get('reg_no', '') }}">
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-bordered align-middle">
+                    <thead class="table-dark">
+                        <tr>
+                            <th style="width: 50px;">Sr. No</th>
+                            <th>Particulars</th>
+                            <th>Details</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- 1. PAN -->
+                        <tr>
+                            <td>1</td>
+                            <td class="fw-bold">PAN of the Trust</td>
+                            <td><input type="text" class="form-control form-control-sm" name="trust_pan" value="{{ data.get('trust_pan', '') }}"></td>
+                        </tr>
+                         <!-- 2. 12AA Reg -->
+                         <tr>
+                            <td>2</td>
+                            <td class="fw-bold">Registration No. with date of registration under section 12AA of Income Tax Act, 1961 (43 of 1961)</td>
+                            <td>
+                                <div class="input-group input-group-sm">
+                                    <span class="input-group-text">No.</span>
+                                    <input type="text" class="form-control" name="reg_12aa_no" value="{{ data.get('reg_12aa_no', '') }}">
+                                    <span class="input-group-text">Date</span>
+                                    <input type="date" class="form-control" name="reg_12aa_date" value="{{ data.get('reg_12aa_date', '') }}">
+                                </div>
+                            </td>
+                        </tr>
+
+                         <!-- 3. ITR Acknowledgement -->
+                         <tr>
+                            <td>3</td>
+                            <td class="fw-bold">Acknowledgement No. with date of</td>
+                            <td class="p-0">
+                                <table class="table table-bordered table-sm mb-0">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th style="width: 50px;">Sr. No</th>
+                                            <th>Acknowledgement No.</th>
+                                            <th>Year</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for i in range(1, 4) %}
+                                        <tr>
+                                            <td>{{ i }}</td>
+                                            <td><input type="text" class="form-control form-control-sm" name="ack_no_{{ i }}" value="{{ data.get('ack_no_' ~ i, '') }}"></td>
+                                            <td><input type="text" class="form-control form-control-sm" name="ack_year_{{ i }}" value="{{ data.get('ack_year_' ~ i, '') }}"></td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </td>
+                        </tr>
+
+                        <!-- 4. Trustees -->
+                        <tr>
+                            <td>4</td>
+                            <td class="fw-bold">PAN No. of all Trustees</td>
+                             <td class="p-0">
+                                <table class="table table-bordered table-sm mb-0" id="trusteeTable">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th style="width: 50px;">Sr. No</th>
+                                            <th>Name of the Trustee</th>
+                                            <th>PAN No.</th>
+                                            <th style="width: 50px;"></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% set trustees = data.get('trustees', [{'name':'', 'pan':''}, {'name':'', 'pan':''}, {'name':'', 'pan':''}, {'name':'', 'pan':''}]) %}
+                                        {% for row in trustees %}
+                                        <tr class="trustee-row">
+                                            <td class="row-num">{{ loop.index }}</td>
+                                            <td><input type="text" class="form-control form-control-sm" name="trustee_name[]" value="{{ row.name }}"></td>
+                                            <td><input type="text" class="form-control form-control-sm" name="trustee_pan[]" value="{{ row.pan }}"></td>
+                                            <td>
+                                                <!-- Only show delete on rows > 1 ?? Or allow all. Image has 4 blank rows -->
+                                                <button type="button" class="btn btn-danger btn-sm" onclick="removeTrustee(this)">x</button>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                    <tfoot>
+                                        <tr>
+                                            <td colspan="4" class="text-center">
+                                                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="addTrustee()">+ Add Trustee</button>
+                                            </td>
+                                        </tr>
+                                    </tfoot>
+                                </table>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Footer Dates -->
+            <div class="row mt-5">
+                <div class="col-md-4">
+                    <label>Place</label>
+                    <input type="text" class="form-control form-control-sm" name="place" value="{{ data.get('place', 'Pune') }}">
+                    <br>
+                    <label>Date</label>
+                    <input type="date" class="form-control form-control-sm" name="date" value="{{ data.get('date', '') }}">
+                </div>
+                 <div class="col-md-4 offset-md-4 text-center">
+                     <p class="fw-bold mb-5">CHARTERED ACCOUNTANTS</p>
+                     <br>
+                     <p><strong>(PARTNER)</strong><br>M. NO. <input type="text" class="form-control form-control-sm d-inline-block w-50" name="m_no" value="{{ data.get('m_no', '0') }}"></p>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <div class="d-flex justify-content-between mt-4">
+        <a href="{{ url_for('balance_sheet.page4c') }}" class="btn btn-secondary">&larr; Back to Page 4C</a>
+        <button type="submit" class="btn btn-primary">Save & Finish</button>
+    </div>
+</form>
+
+<script>
+    function addTrustee() {
+        const tbody = document.querySelector('#trusteeTable tbody');
+        const count = tbody.rows.length + 1;
+        const row = document.createElement('tr');
+        row.className = 'trustee-row';
+        row.innerHTML = `
+            <td class="row-num">\${count}</td>
+            <td><input type="text" class="form-control form-control-sm" name="trustee_name[]"></td>
+            <td><input type="text" class="form-control form-control-sm" name="trustee_pan[]"></td>
+            <td><button type="button" class="btn btn-danger btn-sm" onclick="removeTrustee(this)">x</button></td>
+        `;
+        tbody.appendChild(row);
+    }
+
+    function removeTrustee(btn) {
+        btn.closest('tr').remove();
+        // re-number
+        document.querySelectorAll('.trustee-row').forEach((row, index) => {
+            row.querySelector('.row-num').innerText = index + 1;
+        });
+    }
+</script>
+{% endblock %}

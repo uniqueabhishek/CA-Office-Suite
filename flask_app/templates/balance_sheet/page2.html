@@ -1,0 +1,97 @@
+{% extends "balance_sheet/wrapper.html" %}
+
+{% block balance_sheet_content %}
+<form method="POST" action="{{ url_for('balance_sheet.page2') }}">
+
+    <!-- Schedule 8: Advances -->
+    <div class="card mb-5">
+        <div class="card-header bg-light"><strong>SCHEDULE : 8 ADVANCES</strong></div>
+        <div class="card-body">
+            <div class="row mb-3">
+                <div class="col-md-10>Pitruchaya Society Deposit (Opening)</label></div>
+                <div class="col-md-2 type="number" step="0.01" class="form-control" name="sch8_deposit_opening" value="{{ data.get('sch8_deposit_opening', '0.00') }}"></div>
+            </div>
+            <div class="row mb-3">
+                <div class="col-md-10>Received during the year</label></div>
+                <div class="col-md-2 type="number" step="0.01" class="form-control" name="sch8_deposit_received" value="{{ data.get('sch8_deposit_received', '0.00') }}"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Schedule 9: Income Outstanding -->
+    <div class="card mb-5">
+        <div class="card-header bg-light"><strong>SCHEDULE : 9 INCOME OUTSTANDING</strong></div>
+        <div class="card-body">
+            <h6 class="text-muted">1. Accrued Interest</h6>
+            <div class="row mb-3">
+                <div class="col-md-10>Payout FD TJSB</label></div>
+                <div class="col-md-2 type="number" step="0.01" class="form-control" name="sch9_tjsb" value="{{ data.get('sch9_tjsb', '') }}"></div>
+            </div>
+            <div class="row mb-3">
+                <div class="col-md-10>Payout FD IDBI</label></div>
+                <div class="col-md-2 type="number" step="0.01" class="form-control" name="sch9_idbi" value="{{ data.get('sch9_idbi', '') }}"></div>
+            </div>
+             <div class="row mb-3">
+                <div class="col-md-10>Write off</label></div>
+                <div class="col-md-2 type="number" step="0.01" class="form-control" name="sch9_writeoff" value="{{ data.get('sch9_writeoff', '') }}"></div>
+            </div>
+            <div class="row mb-3">
+                <div class="col-md-10>FD DNS</label></div>
+                <div class="col-md-2 type="number" step="0.01" class="form-control" name="sch9_dns" value="{{ data.get('sch9_dns', '') }}"></div>
+            </div>
+            <hr>
+            <h6 class="text-muted">2. TDS</h6>
+             <div class="row mb-3">
+                <div class="col-md-10>TDS A.Y. 2023-24</label></div>
+                <div class="col-md-2 type="number" step="0.01" class="form-control" name="sch9_tds_23_24" value="{{ data.get('sch9_tds_23_24', '') }}"></div>
+            </div>
+            <div class="row mb-3">
+                <div class="col-md-10>TDS A.Y. 2024-25</label></div>
+                <div class="col-md-2 type="number" step="0.01" class="form-control" name="sch9_tds_24_25" value="{{ data.get('sch9_tds_24_25', '') }}"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Schedule 10: Cash & Bank -->
+    <div class="card mb-5">
+        <div class="card-header bg-light"><strong>SCHEDULE : 10 CASH & BANK BALANCES</strong></div>
+        <div class="card-body">
+            <div class="row mb-3">
+                <div class="col-md-10>Cash in Hand</label></div>
+                <div class="col-md-2 type="number" step="0.01" class="form-control" name="sch10_cash_hand" value="{{ data.get('sch10_cash_hand', '') }}"></div>
+            </div>
+            <hr>
+            <h6>Balances with Bank in Saving Account</h6>
+            <div id="bank-rows">
+                <!-- Ideally dynamic, but static fields for now based on image -->
+                <div class="input-group mb-2">
+                    <span class="input-group-text">Bank of Maha (Rajirao Road)</span>
+                    <input type="text" class="form-control" placeholder="Account No" name="sch10_bank1_acc" value="{{ data.get('sch10_bank1_acc', '20097808539') }}">
+                    <input type="number" step="0.01" class="form-control" placeholder="Amount" name="sch10_bank1_amt" value="{{ data.get('sch10_bank1_amt', '') }}">
+                </div>
+                 <div class="input-group mb-2">
+                    <span class="input-group-text">Bank of Maha (FCRA OLD)</span>
+                    <input type="text" class="form-control" placeholder="Account No" name="sch10_bank2_acc" value="{{ data.get('sch10_bank2_acc', '2013696404-2') }}">
+                    <input type="number" step="0.01" class="form-control" placeholder="Amount" name="sch10_bank2_amt" value="{{ data.get('sch10_bank2_amt', '') }}">
+                </div>
+                 <div class="input-group mb-2">
+                    <span class="input-group-text">Janata Sahakari (Aurangabad)</span>
+                    <input type="text" class="form-control" placeholder="Account No" name="sch10_bank3_acc" value="{{ data.get('sch10_bank3_acc', '16220100033189') }}">
+                    <input type="number" step="0.01" class="form-control" placeholder="Amount" name="sch10_bank3_amt" value="{{ data.get('sch10_bank3_amt', '') }}">
+                </div>
+                <!-- ... other banks can be added similarly ... -->
+                 <div class="input-group mb-2">
+                    <span class="input-group-text">Other/Dynamic Bank</span>
+                    <input type="text" class="form-control" placeholder="Bank Name & Acc" name="sch10_bank_other_name" value="{{ data.get('sch10_bank_other_name', '') }}">
+                    <input type="number" step="0.01" class="form-control" placeholder="Amount" name="sch10_bank_other_amt" value="{{ data.get('sch10_bank_other_amt', '') }}">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="d-flex justify-content-between mt-4">
+        <a href="{{ url_for('balance_sheet.page1') }}" class="btn btn-secondary">&larr; Back to Page 1</a>
+        <button type="submit" class="btn btn-primary">Save & Next (Page 3) &rarr;</button>
+    </div>
+</form>
+{% endblock %}

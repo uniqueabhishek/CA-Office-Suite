@@ -1,0 +1,264 @@
+{% extends "balance_sheet/wrapper.html" %}
+
+{% block balance_sheet_content %}
+<form method="POST" action="{{ url_for('balance_sheet.page_winman') }}" id="winmanForm">
+
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+            <strong>Income Details & Application of Income (Winman Format)</strong>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-bordered align-middle" id="winmanTable">
+                <thead class="table-dark">
+                    <tr>
+                        <th style="width: 60%;">Particulars</th>
+                        <th style="width: 20%;">Amount (Inner)</th>
+                        <th style="width: 20%;">Amount (Outer)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- INCOME DETAILS -->
+                    <tr class="fw-bold bg-light"><td colspan="3">Income details</td></tr>
+                    <tr class="fw-bold"><td colspan="3">Donations</td></tr>
+                    <tr>
+                        <td class="ps-4">Domestic Contribution</td>
+                        <td><input type="number" step="0.01" class="form-control form-control-sm text-end calc-inc" name="don_domestic" value="{{ data.get('don_domestic', '0.00') }}" oninput="calcIncome()"></td>
+                        <td></td>
+                    </tr>
+                    <tr>
+                        <td class="ps-4">Anonymous donations</td>
+                        <td><input type="number" step="0.01" class="form-control form-control-sm text-end calc-inc" name="don_anonymous" value="{{ data.get('don_anonymous', '0.00') }}" oninput="calcIncome()"></td>
+                         <td></td>
+                    </tr>
+                    <tr><td class="ps-4 fw-bold">Corpus donations</td><td></td><td></td></tr>
+                    <tr>
+                         <td class="ps-5">- For renovation or repair of places notified u/s 80G(2)(b)</td>
+                         <td><input type="number" step="0.01" class="form-control form-control-sm text-end calc-inc" name="don_corpus_80g" value="{{ data.get('don_corpus_80g', '0.00') }}" oninput="calcIncome()"></td>
+                         <td></td>
+                    </tr>
+                    <tr>
+                         <td class="ps-5">- Other corpus donations</td>
+                         <td><input type="number" step="0.01" class="form-control form-control-sm text-end calc-inc" name="don_corpus_other" value="{{ data.get('don_corpus_other', '0.00') }}" oninput="calcIncome()"></td>
+                         <td></td>
+                    </tr>
+                    <tr><td class="ps-4 fw-bold">Other than Corpus donations</td><td></td><td></td></tr>
+                    <tr>
+                         <td class="ps-5">- Grants from Government</td>
+                         <td><input type="number" step="0.01" class="form-control form-control-sm text-end calc-inc" name="don_grant_gov" value="{{ data.get('don_grant_gov', '0.00') }}" oninput="calcIncome()"></td>
+                         <td></td>
+                    </tr>
+                    <tr>
+                         <td class="ps-5">- Other specific grants</td>
+                         <td><input type="number" step="0.01" class="form-control form-control-sm text-end calc-inc" name="don_grant_other" value="{{ data.get('don_grant_other', '0.00') }}" oninput="calcIncome()"></td>
+                         <td></td>
+                    </tr>
+                     <tr>
+                         <td class="ps-5">- Other donations</td>
+                         <td><input type="number" step="0.01" class="form-control form-control-sm text-end calc-inc" name="don_other" value="{{ data.get('don_other', '0.00') }}" oninput="calcIncome()"></td>
+                         <td></td>
+                    </tr>
+                    <tr class="fw-bold">
+                        <td class="text-end">Total Donations</td>
+                        <td></td>
+                        <td class="bg-warning text-end" id="total_donations">0.00</td>
+                    </tr>
+
+                    <!-- Other Income -->
+                    <tr class="fw-bold"><td colspan="3">Income other than Donation referred in Sec. 10, 11 & 12</td></tr>
+                     <tr>
+                         <td class="ps-4">Receipts from main objects</td>
+                         <td><input type="number" step="0.01" class="form-control form-control-sm text-end calc-other" name="inc_main" value="{{ data.get('inc_main', '0.00') }}" oninput="calcIncome()"></td>
+                         <td></td>
+                    </tr>
+                    <tr>
+                         <td class="ps-4">Interest</td>
+                         <td><input type="number" step="0.01" class="form-control form-control-sm text-end calc-other" name="inc_interest" value="{{ data.get('inc_interest', '0.00') }}" oninput="calcIncome()"></td>
+                         <td></td>
+                    </tr>
+                     <tr>
+                         <td class="ps-4">Other Income</td>
+                         <td><input type="number" step="0.01" class="form-control form-control-sm text-end calc-other" name="inc_other" value="{{ data.get('inc_other', '0.00') }}" oninput="calcIncome()"></td>
+                         <td></td>
+                    </tr>
+                    <tr class="fw-bold">
+                        <td class="text-end">Total Other Income</td>
+                        <td></td>
+                        <td class="bg-warning text-end" id="total_other_inc">0.00</td>
+                    </tr>
+
+                     <tr class="fw-bold fs-5 bg-secondary text-white">
+                        <td class="text-end">Aggregate Income referred to in sections 10, 11 & 12</td>
+                        <td></td>
+                        <td class="text-end" id="agg_income">0.00</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <!-- APPLICATION -->
+            <table class="table table-bordered align-middle mt-4">
+                <thead class="table-dark">
+                    <tr>
+                        <th style="width: 40%;">Application of Income</th>
+                        <th style="width: 20%;">Revenue</th>
+                        <th style="width: 20%;">Capital</th>
+                        <th style="width: 20%;">Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr class="fw-bold bg-light"><td colspan="4">A. Expenditure of the trust/institution:</td></tr>
+                    <tr>
+                        <td class="ps-4">Medical relief</td>
+                        <td><input type="number" step="0.01" class="form-control form-control-sm text-end calc-exp-rev" name="exp_med_rev" value="{{ data.get('exp_med_rev', '0.00') }}" oninput="calcApp()"></td>
+                        <td><input type="number" step="0.01" class="form-control form-control-sm text-end calc-exp-cap" name="exp_med_cap" value="{{ data.get('exp_med_cap', '0.00') }}" oninput="calcApp()"></td>
+                        <td class="text-end total-row">0.00</td>
+                    </tr>
+                    <tr>
+                        <td class="ps-4">General public utility</td>
+                        <td><input type="number" step="0.01" class="form-control form-control-sm text-end calc-exp-rev" name="exp_pub_rev" value="{{ data.get('exp_pub_rev', '0.00') }}" oninput="calcApp()"></td>
+                        <td><input type="number" step="0.01" class="form-control form-control-sm text-end calc-exp-cap" name="exp_pub_cap" value="{{ data.get('exp_pub_cap', '0.00') }}" oninput="calcApp()"></td>
+                        <td class="text-end total-row">0.00</td>
+                    </tr>
+                    <tr>
+                        <td class="ps-4">Establishment</td>
+                        <td><input type="number" step="0.01" class="form-control form-control-sm text-end calc-exp-rev" name="exp_est_rev" value="{{ data.get('exp_est_rev', '0.00') }}" oninput="calcApp()"></td>
+                        <td><input type="number" step="0.01" class="form-control form-control-sm text-end calc-exp-cap" name="exp_est_cap" value="{{ data.get('exp_est_cap', '0.00') }}" oninput="calcApp()"></td>
+                        <td class="text-end total-row">0.00</td>
+                    </tr>
+                    <tr>
+                         <td class="ps-4">Depreciation</td>
+                        <td><input type="number" step="0.01" class="form-control form-control-sm text-end calc-exp-rev" name="exp_dep_rev" value="{{ data.get('exp_dep_rev', '0.00') }}" oninput="calcApp()"></td>
+                        <td><input type="number" step="0.01" class="form-control form-control-sm text-end calc-exp-cap" name="exp_dep_cap" value="{{ data.get('exp_dep_cap', '0.00') }}" oninput="calcApp()"></td>
+                        <td class="text-end total-row">0.00</td>
+                    </tr>
+                     <tr class="fw-bold bg-warning">
+                        <td class="text-end">Total expenditure (A)</td>
+                        <td class="text-end" id="total_exp_rev">0.00</td>
+                        <td class="text-end" id="total_exp_cap">0.00</td>
+                        <td class="text-end" id="total_exp_all">0.00</td>
+                    </tr>
+
+                     <!-- B. Not Allowed -->
+                     <tr class="fw-bold bg-light"><td colspan="4">B. Expenditure included in 'A' above not allowed as application:</td></tr>
+                      <tr>
+                        <td class="ps-4">Depreciation</td>
+                        <td><input type="number" step="0.01" class="form-control form-control-sm text-end calc-b" name="not_all_dep" value="{{ data.get('not_all_dep', '0.00') }}" oninput="calcApp()"></td>
+                        <td colspan="2"></td>
+                    </tr>
+                     <tr class="fw-bold">
+                        <td class="text-end">Total (B)</td>
+                        <td class="text-end" id="total_b">0.00</td>
+                        <td colspan="2"></td>
+                    </tr>
+
+                     <!-- C. Sources -->
+                     <tr class="fw-bold bg-light"><td colspan="4">C. Sources of Fund for expenses in 'A' above:</td></tr>
+                     <tr>
+                        <td class="ps-4">Income accumulated in earlier years</td>
+                        <td><input type="number" step="0.01" class="form-control form-control-sm text-end calc-c" name="source_acc" value="{{ data.get('source_acc', '0.00') }}" oninput="calcApp()"></td>
+                        <td colspan="2"></td>
+                    </tr>
+                    <tr>
+                        <td class="ps-4">Corpus Fund</td>
+                        <td><input type="number" step="0.01" class="form-control form-control-sm text-end calc-c" name="source_corpus" value="{{ data.get('source_corpus', '0.00') }}" oninput="calcApp()"></td>
+                        <td colspan="2"></td>
+                    </tr>
+                     <tr class="fw-bold">
+                        <td class="text-end">Total (C)</td>
+                        <td class="text-end" id="total_c">0.00</td>
+                        <td colspan="2"></td>
+                    </tr>
+
+                     <!-- D. NET -->
+                    <tr class="fw-bold fs-5 bg-secondary text-white">
+                        <td class="text-end">D. Net (A - B - C)</td>
+                         <td class="text-end" id="net_rev">0.00</td>
+                         <td class="text-end" id="net_cap">0.00</td>
+                         <td class="text-end" id="net_total">0.00</td>
+                    </tr>
+                    <!-- Amount allowed -->
+                     <tr class="fw-bold">
+                        <td class="text-end">Amount allowed as application</td>
+                        <td colspan="2"></td>
+                        <td class="text-end" id="amount_allowed">0.00</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="d-flex justify-content-between mt-4">
+        <a href="{{ url_for('balance_sheet.page4d') }}" class="btn btn-secondary">&larr; Back to Page 4D</a>
+        <button type="submit" class="btn btn-primary">Save & Finish</button>
+    </div>
+</form>
+
+<script>
+    function parseVal(selector) {
+        val = document.querySelector(selector).value;
+        return parseFloat(val) || 0;
+    }
+    function parseEl(el) { return parseFloat(el.value) || 0; }
+    function setTxt(id, val) { document.getElementById(id).innerText = val.toFixed(2); }
+
+    function calcIncome() {
+        let don = 0;
+        document.querySelectorAll('.calc-inc').forEach(e => don += parseEl(e));
+        setTxt('total_donations', don);
+
+        let other = 0;
+         document.querySelectorAll('.calc-other').forEach(e => other += parseEl(e));
+        setTxt('total_other_inc', other);
+
+        setTxt('agg_income', don + other);
+    }
+
+    function calcApp() {
+        // A. Expenditure
+        let rev = 0; document.querySelectorAll('.calc-exp-rev').forEach(e => {
+            rev += parseEl(e);
+            // row total
+            let row = e.closest('tr');
+            let r = parseEl(row.querySelector('.calc-exp-rev'));
+            let c = parseEl(row.querySelector('.calc-exp-cap'));
+            row.querySelector('.total-row').innerText = (r+c).toFixed(2);
+        });
+
+        let cap = 0; document.querySelectorAll('.calc-exp-cap').forEach(e => cap += parseEl(e));
+
+        setTxt('total_exp_rev', rev);
+        setTxt('total_exp_cap', cap);
+        setTxt('total_exp_all', rev + cap);
+
+        // B. Not Allowed
+        let b = 0; document.querySelectorAll('.calc-b').forEach(e => b += parseEl(e));
+        setTxt('total_b', b);
+
+        // C. Sources
+        let c = 0; document.querySelectorAll('.calc-c').forEach(e => c += parseEl(e));
+        setTxt('total_c', c);
+
+        // D. NET (A - B - C)
+        // Usually Net is calculated on Total or Revenue side. The image is complex.
+        // D. Net (A - B - C) row in image has values in Rev and Cap cols.
+        // It seems B and C are subtracted from A.
+        // Assuming B and C are Revenue adjustments basically?
+        // Let's assume B and C affect Revenue side primarily unless specified.
+        // Net Rev = Rev A - B - C
+        // Net Cap = Cap A (unless B/C has cap components, but inputs are simple for now)
+
+        let netRev = rev - b - c;
+        let netCap = cap;
+
+        setTxt('net_rev', netRev);
+        setTxt('net_cap', netCap);
+        setTxt('net_total', netRev + netCap);
+
+        // Amount allowed as application seems to be mostly Net Total +- adjustments
+        // For now, simpler: matches Net Total
+        setTxt('amount_allowed', netRev + netCap);
+    }
+
+    calcIncome();
+    calcApp();
+</script>
+{% endblock %}

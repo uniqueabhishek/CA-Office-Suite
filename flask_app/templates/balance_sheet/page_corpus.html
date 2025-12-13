@@ -1,0 +1,222 @@
+{% extends "balance_sheet/wrapper.html" %}
+
+{% block balance_sheet_content %}
+<form method="POST" action="{{ url_for('balance_sheet.page_corpus') }}" id="corpusForm">
+
+    <div class="card mb-4">
+        <div class="card-header bg-secondary text-white">
+            <strong>Details of Corpus Fund - For J(A1) of ITR</strong>
+        </div>
+        <div class="card-body">
+
+            <div class="table-responsive">
+                <table class="table table-bordered align-middle mb-4" id="corpusTable" style="min-width: 1400px;">
+                    <thead class="table-dark text-center">
+                        <tr>
+                            <th rowspan="2" style="width: 250px;">Purpose of Corpus Donation</th>
+                            <th rowspan="2">Opening Balance</th>
+                            <th rowspan="2">Received during the year</th>
+                            <th rowspan="2">Applied during the year</th>
+                            <th rowspan="2">Amount invested / deposited back</th>
+                            <th rowspan="2">Others</th>
+                            <th rowspan="2">Total</th>
+                            <th rowspan="2">Closing balance</th>
+                            <th rowspan="2">Amount taxed in AY 2022-23</th>
+                            <th colspan="2">Invested as on 31-3-2023</th>
+                        </tr>
+                        <tr>
+                            <th>As per Sec 11(5)</th>
+                            <th>Other modes</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Row 1 -->
+                        <tr>
+                            <td>(i) Renovation/ repair of places u/s 80G(2)(b) from 01.04.20</td>
+                            <td><input type="number" step="0.01" class="form-control form-control-sm text-end" name="op_80g" value="{{ data.get('op_80g', '0.00') }}"></td>
+                            <td><input type="number" step="0.01" class="form-control form-control-sm text-end" name="rec_80g" value="{{ data.get('rec_80g', '0.00') }}"></td>
+                            <td><input type="number" step="0.01" class="form-control form-control-sm text-end" name="app_80g" value="{{ data.get('app_80g', '0.00') }}"></td>
+                            <td><input type="number" step="0.01" class="form-control form-control-sm text-end" name="inv_80g" value="{{ data.get('inv_80g', '0.00') }}"></td>
+                            <td><input type="number" step="0.01" class="form-control form-control-sm text-end" name="oth_80g" value="{{ data.get('oth_80g', '0.00') }}"></td>
+                            <td><input type="number" step="0.01" class="form-control form-control-sm text-end" name="tot_80g" value="{{ data.get('tot_80g', '0.00') }}"></td>
+                            <td><input type="number" step="0.01" class="form-control form-control-sm text-end" name="cl_80g" value="{{ data.get('cl_80g', '0.00') }}"></td>
+                            <td><input type="number" step="0.01" class="form-control form-control-sm text-end" name="tax_80g" value="{{ data.get('tax_80g', '0.00') }}"></td>
+                            <td><input type="number" step="0.01" class="form-control form-control-sm text-end" name="sec_80g" value="{{ data.get('sec_80g', '0.00') }}"></td>
+                            <td><input type="number" step="0.01" class="form-control form-control-sm text-end" name="mod_80g" value="{{ data.get('mod_80g', '0.00') }}"></td>
+                        </tr>
+                        <!-- Row 2 -->
+                         <tr>
+                            <td>(ii) Other than (i) from 01.04.21</td>
+                            <td><input type="number" step="0.01" class="form-control form-control-sm text-end" name="op_oth1" value="{{ data.get('op_oth1', '0.00') }}"></td>
+                            <td><input type="number" step="0.01" class="form-control form-control-sm text-end" name="rec_oth1" value="{{ data.get('rec_oth1', '0.00') }}"></td>
+                            <td><input type="number" step="0.01" class="form-control form-control-sm text-end" name="app_oth1" value="{{ data.get('app_oth1', '0.00') }}"></td>
+                            <td><input type="number" step="0.01" class="form-control form-control-sm text-end" name="inv_oth1" value="{{ data.get('inv_oth1', '0.00') }}"></td>
+                            <td><input type="number" step="0.01" class="form-control form-control-sm text-end" name="oth_oth1" value="{{ data.get('oth_oth1', '0.00') }}"></td>
+                            <td><input type="number" step="0.01" class="form-control form-control-sm text-end" name="tot_oth1" value="{{ data.get('tot_oth1', '0.00') }}"></td>
+                            <td><input type="number" step="0.01" class="form-control form-control-sm text-end" name="cl_oth1" value="{{ data.get('cl_oth1', '0.00') }}"></td>
+                            <td><input type="number" step="0.01" class="form-control form-control-sm text-end" name="tax_oth1" value="{{ data.get('tax_oth1', '0.00') }}"></td>
+                            <td><input type="number" step="0.01" class="form-control form-control-sm text-end" name="sec_oth1" value="{{ data.get('sec_oth1', '0.00') }}"></td>
+                            <td><input type="number" step="0.01" class="form-control form-control-sm text-end" name="mod_oth1" value="{{ data.get('mod_oth1', '0.00') }}"></td>
+                        </tr>
+                        <!-- Row 3 -->
+                         <tr class="table-warning">
+                            <td>(iii) Other than (i) till 31.03.21</td>
+                            <td><input type="number" step="0.01" class="form-control form-control-sm text-end" name="op_oth2" value="{{ data.get('op_oth2', '51732410.00') }}"></td>
+                            <td><input type="number" step="0.01" class="form-control form-control-sm text-end" name="rec_oth2" value="{{ data.get('rec_oth2', '0.00') }}"></td>
+                            <td><input type="number" step="0.01" class="form-control form-control-sm text-end" name="app_oth2" value="{{ data.get('app_oth2', '0.00') }}"></td>
+                            <td><input type="number" step="0.01" class="form-control form-control-sm text-end" name="inv_oth2" value="{{ data.get('inv_oth2', '0.00') }}"></td>
+                            <td><input type="number" step="0.01" class="form-control form-control-sm text-end" name="oth_oth2" value="{{ data.get('oth_oth2', '0.00') }}"></td>
+                            <td><input type="number" step="0.01" class="form-control form-control-sm text-end" name="tot_oth2" value="{{ data.get('tot_oth2', '0.00') }}"></td>
+                            <td><input type="number" step="0.01" class="form-control form-control-sm text-end" name="cl_oth2" value="{{ data.get('cl_oth2', '51732410.00') }}"></td>
+                            <td><input type="number" step="0.01" class="form-control form-control-sm text-end" name="tax_oth2" value="{{ data.get('tax_oth2', '0.00') }}"></td>
+                            <td><input type="number" step="0.01" class="form-control form-control-sm text-end" name="sec_oth2" value="{{ data.get('sec_oth2', '51732410.00') }}"></td>
+                            <td><input type="number" step="0.01" class="form-control form-control-sm text-end" name="mod_oth2" value="{{ data.get('mod_oth2', '0.00') }}"></td>
+                        </tr>
+                        <!-- Total -->
+                         <tr class="fw-bold">
+                            <td>Total</td>
+                            <!-- Provide totals or auto-calc based on rows. Inputs for now to be safe -->
+                             <td colspan="10" class="text-center text-muted">Totals (Auto-calc suggested if strictly summed)</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h5 class="mt-4">Reconciliation of Corpus fund - For Sch. R of ITR</h5>
+            <div class="table-responsive">
+                <table class="table table-bordered table-sm align-middle">
+                     <thead class="table-light">
+                        <tr>
+                            <th>Particulars</th>
+                            <th>(i) Repair 80G</th>
+                            <th>(ii) Other > 2021</th>
+                            <th>(iii) Other < 2021</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Closing balance as per Sch.J</td>
+                            <td><input type="number" class="form-control form-control-sm text-end" name="rec_cl_80g" readonly></td>
+                            <td><input type="number" class="form-control form-control-sm text-end" name="rec_cl_oth1" readonly></td>
+                            <td><input type="number" class="form-control form-control-sm text-end" name="rec_cl_oth2" readonly></td>
+                        </tr>
+                         <tr>
+                            <td>Adjustments [For deletions enter minus(-)]</td>
+                            <td><input type="number" class="form-control form-control-sm text-end" name="rec_adj_80g" value="{{ data.get('rec_adj_80g', '0.00') }}"></td>
+                            <td><input type="number" class="form-control form-control-sm text-end" name="rec_adj_oth1" value="{{ data.get('rec_adj_oth1', '0.00') }}"></td>
+                            <td><input type="number" class="form-control form-control-sm text-end" name="rec_adj_oth2" value="{{ data.get('rec_adj_oth2', '0.00') }}"></td>
+                        </tr>
+                         <tr>
+                            <td>Balance as per ITR B/S ('Own funds' table)</td>
+                            <td><input type="number" class="form-control form-control-sm text-end" name="rec_bs_80g" value="{{ data.get('rec_bs_80g', '') }}"></td>
+                            <td><input type="number" class="form-control form-control-sm text-end" name="rec_bs_oth1" value="{{ data.get('rec_bs_oth1', '') }}"></td>
+                            <td><input type="number" class="form-control form-control-sm text-end" name="rec_bs_oth2" value="{{ data.get('rec_bs_oth2', '') }}"></td>
+                        </tr>
+                         <tr>
+                            <td>Difference</td>
+                             <!-- Auto calc -->
+                            <td><input type="number" class="form-control form-control-sm text-end" name="rec_diff_80g" readonly></td>
+                            <td><input type="number" class="form-control form-control-sm text-end" name="rec_diff_oth1" readonly></td>
+                            <td><input type="number" class="form-control form-control-sm text-end" name="rec_diff_oth2" readonly></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Summary Investment -->
+            <div class="row mt-4">
+                <div class="col-md-6">
+                    <h6 class="fw-bold">Total Funds Summary</h6>
+                    <table class="table table-bordered table-sm">
+                        <tr>
+                            <td>Corpus Fund (i)</td>
+                            <td class="text-end" id="sum_80g">0.00</td>
+                        </tr>
+                        <tr>
+                            <td>Corpus Fund (ii)</td>
+                            <td class="text-end" id="sum_oth1">0.00</td>
+                        </tr>
+                         <tr>
+                            <td>Corpus Fund (iii)</td>
+                            <td class="text-end" id="sum_oth2">0.00</td>
+                        </tr>
+                         <tr>
+                            <td>Accumulated income u/s 11(2)</td>
+                             <td><input type="number" class="form-control form-control-sm text-end" name="sum_acc" value="{{ data.get('sum_acc', '') }}"></td>
+                        </tr>
+                        <tr>
+                            <td>Amount to be applied in future</td>
+                             <td><input type="number" class="form-control form-control-sm text-end" name="sum_fut" value="{{ data.get('sum_fut', '') }}"></td>
+                        </tr>
+                         <tr>
+                            <td>Other Reserves</td>
+                             <td><input type="number" class="form-control form-control-sm text-end" name="sum_res_oth" value="{{ data.get('sum_res_oth', '') }}"></td>
+                        </tr>
+                        <tr>
+                            <td>Reserves</td>
+                             <td><input type="number" class="form-control form-control-sm text-end" name="sum_res" value="{{ data.get('sum_res', '36088171.00') }}" oninput="calcFunds()"></td>
+                        </tr>
+                        <tr class="bg-warning fw-bold">
+                            <td>Total Funds</td>
+                            <td class="text-end" id="total_funds">0.00</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <div class="d-flex justify-content-between mt-4">
+        <a href="{{ url_for('balance_sheet.page_winman') }}" class="btn btn-secondary">&larr; Back to Winman</a>
+        <button type="submit" class="btn btn-primary">Save & Finish</button>
+    </div>
+</form>
+
+<script>
+    function parseEl(name) {
+        val = document.getElementsByName(name)[0].value;
+        return parseFloat(val) || 0;
+    }
+
+    function updateReconciliation() {
+        // Sync Closing Balance to Reconciliation
+        const c1 = parseEl('cl_80g');
+        const c2 = parseEl('cl_oth1');
+        const c3 = parseEl('cl_oth2');
+
+        document.getElementsByName('rec_cl_80g')[0].value = c1.toFixed(2);
+        document.getElementsByName('rec_cl_oth1')[0].value = c2.toFixed(2);
+        document.getElementsByName('rec_cl_oth2')[0].value = c3.toFixed(2);
+
+        // Sync to Summary
+        document.getElementById('sum_80g').innerText = c1.toFixed(2);
+        document.getElementById('sum_oth1').innerText = c2.toFixed(2);
+        document.getElementById('sum_oth2').innerText = c3.toFixed(2);
+
+        calcFunds();
+    }
+
+    function calcFunds() {
+        const s1 = parseFloat(document.getElementById('sum_80g').innerText) || 0;
+        const s2 = parseFloat(document.getElementById('sum_oth1').innerText) || 0;
+        const s3 = parseFloat(document.getElementById('sum_oth2').innerText) || 0;
+
+        const acc = parseEl('sum_acc');
+        const fut = parseEl('sum_fut');
+        const res_oth = parseEl('sum_res_oth');
+        const res = parseEl('sum_res');
+
+        const total = s1 + s2 + s3 + acc + fut + res_oth + res;
+        document.getElementById('total_funds').innerText = total.toFixed(2);
+    }
+
+    // Attach listeners to closing balance inputs
+    ['cl_80g', 'cl_oth1', 'cl_oth2', 'sum_acc', 'sum_fut', 'sum_res_oth', 'sum_res'].forEach(name => {
+        document.getElementsByName(name)[0].addEventListener('input', updateReconciliation);
+    });
+
+    // Initial run
+    updateReconciliation();
+</script>
+{% endblock %}

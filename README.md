@@ -332,3 +332,65 @@ If you find this project useful, please consider giving it a star ⭐
 ---
 
 **Built with ❤️ for Chartered Accountants**
+
+```
+PY __ CA Office Suite
+├─ .flake8
+├─ ARCHITECTURE.md
+├─ CA_Firm_Office_Suite.bat
+├─ CHANGELOG.md
+├─ config
+│  ├─ constants.py
+│  └─ __init__.py
+├─ CONTRIBUTING.md
+├─ core
+│  ├─ excel_utils.py
+│  ├─ excel_writer.py
+│  └─ __init__.py
+├─ desktop_suite_app.py
+├─ DEVELOPER_GUIDE.md
+├─ DOCUMENTATION_INDEX.md
+├─ excel_formatter_tool.py
+├─ excel_merge_split_tool.py
+├─ flask_app
+│  ├─ app.py
+│  ├─ core
+│  │  ├─ excel_utils.py
+│  │  ├─ excel_writer.py
+│  │  ├─ merge_logic.py
+│  │  ├─ transformations.py
+│  │  └─ __init__.py
+│  ├─ Procfile
+│  ├─ requirements.txt
+│  ├─ static
+│  │  └─ style.css
+│  ├─ templates
+│  │  ├─ base.html
+│  │  ├─ formatter.html
+│  │  ├─ index.html
+│  │  ├─ merge.html
+│  │  └─ select_tables.html
+│  └─ utils.py
+├─ LICENSE
+├─ pdf_to_excel_pro_tool.py
+├─ PHASE_4.2_COMPLETION_REPORT.md
+├─ PHASE_4.3_COMPLETION_REPORT.md
+├─ PHASE_4.4_COMPLETION_REPORT.md
+├─ Procfile
+├─ README.md
+├─ requirements-dev.txt
+├─ requirements.txt
+├─ ui
+│  ├─ components
+│  │  ├─ progress_logger.py
+│  │  └─ __init__.py
+│  └─ __init__.py
+├─ USER_GUIDE.md
+└─ workers
+   ├─ base_worker.py
+   ├─ formatter_worker.py
+   ├─ merge_worker.py
+   ├─ pdf_worker.py
+   └─ __init__.py
+
+```
