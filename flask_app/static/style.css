@@ -11,6 +11,10 @@
   --border-color: #e0e0e0;
 }
 
+html {
+  overflow-y: scroll; /* Always show scrollbar to prevent layout shift between tabs */
+}
+
 body {
   font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
   background-color: var(--bg-color);

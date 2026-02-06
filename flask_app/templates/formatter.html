@@ -2,13 +2,13 @@
 {% block title %}Excel Formatter | CA Office Suite{% endblock %}
 
 {% block content %}
-<form action="{{ url_for('formatter') }}" method="post" enctype="multipart/form-data" class="split-layout">
+<div style="display: grid; grid-template-columns: 400px 1fr; gap: 20px; width: 100%; box-sizing: border-box; flex: 1;">
 
     <!-- Left Panel: Controls -->
-    <div class="left-panel">
+    <form action="{{ url_for('formatter') }}" method="post" enctype="multipart/form-data" style="display: flex; flex-direction: column; height: 100%;">
 
         <!-- A. File Handling -->
-        <div class="group-box">
+        <div class="group-box" style="margin-top: 0;">
             <span class="group-title">A. File Handling</span>
             <input type="file" name="file" class="form-control" accept=".xlsx,.xls,.csv" required>
             <div class="mt-2 text-muted" style="font-size: 0.85em;">
@@ -81,70 +81,63 @@
         </div>
 
         <!-- D. Preview & Apply -->
-        <div class="group-box">
-             <span class="group-title">D. Preview & Apply</span>
+        <div class="group-box" style="flex: 1; display: flex; flex-direction: column; margin-bottom: 0;">
+            <span class="group-title">D. Preview & Apply</span>
 
-             <div style="display: flex; gap: 8px; margin-bottom: 12px;">
-                 <button type="button" class="btn btn-success" style="flex: 1; font-size: 0.85em;" onclick="alert('Preview feature coming soon to Web Version!')">Preview Selected File</button>
-                 <button type="submit" class="btn btn-success" style="flex: 1; font-size: 0.85em;">Apply to All</button>
-                 <a href="{{ url_for('index') }}" class="btn btn-secondary" style="flex: 0.5; font-size: 0.85em;">Cancel</a>
-             </div>
+            <div style="display: flex; gap: 8px; margin-bottom: 12px;">
+                <button type="button" class="btn btn-success" style="flex: 1; font-size: 0.85em;" onclick="alert('Preview feature coming soon to Web Version!')">Preview Selected File</button>
+                <button type="submit" class="btn btn-success" style="flex: 1; font-size: 0.85em;">Apply to All</button>
+                <a href="{{ url_for('index') }}" class="btn btn-secondary" style="flex: 0.5; font-size: 0.85em;">Cancel</a>
+            </div>
 
-             <!-- Progress Bar (Visual Only) -->
-             <div class="progress" style="height: 20px; margin-bottom: 10px; background-color: #e9ecef;">
-                 <div class="progress-bar" role="progressbar" style="width: 0%; color: black;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">0%</div>
-             </div>
+            <!-- Progress Bar (Visual Only) -->
+            <div class="progress" style="height: 20px; margin-bottom: 10px; background-color: #e9ecef;">
+                <div class="progress-bar" role="progressbar" style="width: 0%; color: black;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">0%</div>
+            </div>
 
-             <label style="font-weight: bold; font-size: 0.9em;">Log / Report</label>
-             <textarea class="form-control" rows="4" readonly style="resize: none; font-size: 0.85em; background: #fff; color: #555;">Ready to process...</textarea>
+            <label style="font-weight: bold; font-size: 0.9em;">Log / Report</label>
+            <textarea class="form-control" rows="4" readonly style="flex: 1; resize: none; font-size: 0.85em; background: #fff; color: #555;">Ready to process...</textarea>
         </div>
 
-    </div>
+    </form>
 
-    <!-- Right Panel: Preview -->
-    <div class="right-panel">
-        <div style="padding: 10px; border-bottom: 1px solid #ddd; font-weight: bold; background: #fafafa;">
-            Preview: (Preview functionality coming soon)
-        </div>
-        <div class="table-wrapper">
-            <!-- Feature Showcase -->
-            <div class="engine-showcase" style="text-align: center; padding: 40px; max-width: 550px; margin: 0 auto;">
-                <!-- Technical Icon -->
-                <div style="margin-bottom: 20px;">
-                    <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#107c41" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                        <polyline points="14 2 14 8 20 8"></polyline>
-                        <path d="M9 15l2 2 4-4"></path> <!-- Checkmark -->
-                        <line x1="9" y1="12" x2="15" y2="12"></line> <!-- Data line -->
-                    </svg>
-                </div>
+    <!-- Right Panel: Hero Section -->
+    <div style="background: #f9f9f9; border: 1px solid #ddd; display: flex; align-items: center; justify-content: center; border-radius: 6px;">
+        <div class="engine-showcase" style="text-align: center; padding: 40px; max-width: 550px;">
+            <div style="margin-bottom: 20px;">
+                <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#107c41" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                    <polyline points="14 2 14 8 20 8"></polyline>
+                    <path d="M9 15l2 2 4-4"></path>
+                    <line x1="9" y1="12" x2="15" y2="12"></line>
+                </svg>
+            </div>
 
-                <h2 style="color: #2c3e50; font-weight: 600; margin-bottom: 12px; font-size: 1.5em; letter-spacing: -0.5px;">Advanced Data Sanitization</h2>
-                <div style="height: 3px; width: 40px; background: #107c41; margin: 0 auto 20px auto; border-radius: 2px;"></div>
+            <h2 style="color: #2c3e50; font-weight: 600; margin-bottom: 12px; font-size: 1.5em; letter-spacing: -0.5px;">Advanced Data Sanitization</h2>
+            <div style="height: 3px; width: 40px; background: #107c41; margin: 0 auto 20px auto; border-radius: 2px;"></div>
 
-                <div style="text-align: left; background: #fff; border: 1px solid #e0e0e0; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
-                    <ul style="list-style: none; padding: 0; margin: 0; color: #555;">
-                        <li style="margin-bottom: 12px; display: flex; align-items: flex-start;">
-                            <span style="color: #107c41; font-weight: bold; margin-right: 10px;">•</span>
-                            <span><strong>Automated Cleaning:</strong> Instantly normalizes dates, trims whitespace, and fixes number formats.</span>
-                        </li>
-                        <li style="margin-bottom: 12px; display: flex; align-items: flex-start;">
-                            <span style="color: #107c41; font-weight: bold; margin-right: 10px;">•</span>
-                            <span><strong>Lossless Processing:</strong> Retains all unrelated cell data while fixing specific formatting errors.</span>
-                        </li>
-                        <li style="display: flex; align-items: flex-start;">
-                            <span style="color: #107c41; font-weight: bold; margin-right: 10px;">•</span>
-                            <span><strong>Batch Intelligence:</strong> Applies consistent professional styling across multiple files in seconds.</span>
-                        </li>
-                    </ul>
-                </div>
+            <div style="text-align: left; background: #fff; border: 1px solid #e0e0e0; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
+                <ul style="list-style: none; padding: 0; margin: 0; color: #555;">
+                    <li style="margin-bottom: 12px; display: flex; align-items: flex-start;">
+                        <span style="color: #107c41; font-weight: bold; margin-right: 10px;">•</span>
+                        <span><strong>Automated Cleaning:</strong> Instantly normalizes dates, trims whitespace, and fixes number formats.</span>
+                    </li>
+                    <li style="margin-bottom: 12px; display: flex; align-items: flex-start;">
+                        <span style="color: #107c41; font-weight: bold; margin-right: 10px;">•</span>
+                        <span><strong>Lossless Processing:</strong> Retains all unrelated cell data while fixing specific formatting errors.</span>
+                    </li>
+                    <li style="display: flex; align-items: flex-start;">
+                        <span style="color: #107c41; font-weight: bold; margin-right: 10px;">•</span>
+                        <span><strong>Batch Intelligence:</strong> Applies consistent professional styling across multiple files in seconds.</span>
+                    </li>
+                </ul>
+            </div>
 
-                <div style="margin-top: 25px; color: #888; font-size: 0.9em; font-style: italic;">
-                    Select your cleaning options on the left and click "Apply" to begin.
-                </div>
+            <div style="margin-top: 25px; color: #888; font-size: 0.9em; font-style: italic;">
+                Select your cleaning options on the left and click "Apply" to begin.
             </div>
         </div>
     </div>
 
-</form>
+</div>
 {% endblock %}
