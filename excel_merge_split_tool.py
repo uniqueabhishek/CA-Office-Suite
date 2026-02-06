@@ -1,5 +1,4 @@
 import os
-import pandas as pd
 from PyQt5 import QtWidgets
 from PyQt5.QtWidgets import (
     QWidget,
@@ -14,72 +13,11 @@ from PyQt5.QtWidgets import (
     QGroupBox,
 )
 
-# For writing styles and fixing column width
-from openpyxl import Workbook, load_workbook
-from openpyxl.utils import get_column_letter
-from openpyxl.utils.dataframe import dataframe_to_rows
-from openpyxl.styles import Font, PatternFill, Border, Side, Alignment
-
 # Import shared utilities from core modules
 from core.excel_utils import list_excel_files_in_folder, read_all_sheets
 from core.excel_writer import save_df_to_excel
 from workers.merge_worker import MergeWorker
 from ui.components import ProgressLogger
-
-# Note: Utility functions list_excel_files_in_folder, read_file_to_df, read_all_sheets,
-# and save_df_to_excel are now imported from core modules above.
-
-
-# ---------- Legacy utility functions (to be removed in Phase 4.2) ----------
-def apply_openpyxl_autofit_and_theme(
-    path, sheet_name=None, number_format_map=None, apply_theme=False
-):
-    """
-    Post-process existing workbook to set column widths.
-    """
-    wb = load_workbook(path)
-    if sheet_name:
-        if sheet_name in wb.sheetnames:
-            ws_list = [wb[sheet_name]]
-        else:
-            ws_list = []
-    else:
-        ws_list = [wb[s] for s in wb.sheetnames]
-
-    thin = Side(border_style="thin", color="000000")
-    for ws in ws_list:
-        if ws is None:
-            continue
-        if ws.max_row >= 1:
-            for cell in ws[1]:
-                cell.font = Font(bold=True)
-                cell.fill = PatternFill("solid", fgColor="DDDDDD")
-                cell.alignment = Alignment(
-                    horizontal="center", vertical="center")
-                cell.border = Border(left=thin, right=thin,
-                                     top=thin, bottom=thin)
-
-        for col in ws.columns:
-            max_len = 0
-            col_index = col[0].column
-            if col_index is None or not isinstance(col_index, int):
-                continue
-            col_letter = get_column_letter(col_index)
-            for cell in col:
-                try:
-                    val = cell.value
-                    length = len(str(val)) if val is not None else 0
-                except Exception:
-                    length = 0
-                if length > max_len:
-                    max_len = length
-            ws.column_dimensions[col_letter].width = min(
-                max(50, max_len + 2), 100)
-
-    if apply_theme:
-        pass
-    wb.save(path)
-
 
 # ---------- GUI ----------
 class ExcelMergeSplitWindow(QWidget):
@@ -292,48 +230,6 @@ class ExcelMergeSplitWindow(QWidget):
 
         self.progress_logger.log("Processing complete.")
         QMessageBox.information(self, "Done", "Processing finished.")
-
-    def merge_files(self, files, merged_path):
-        """
-        Merge multiple files into one workbook.
-        """
-        dfs = []
-        colsets = []
-        sheetmaps = {}
-        for f in files:
-            try:
-                sheets = read_all_sheets(f)
-                if not sheets:
-                    continue
-                # prefer first sheet for column comparison
-                first_sheet_name = list(sheets.keys())[0]
-                df = sheets[first_sheet_name]
-                dfs.append((f, df))
-                colsets.append(tuple(df.columns))
-                sheetmaps[f] = sheets
-            except Exception as e:
-                self.progress_logger.log(f"Skipping {f} during merge: {e}")
-
-        # if all column sets identical, concat
-        if len(colsets) >= 1 and all(cs == colsets[0] for cs in colsets):
-            merged_df = pd.concat([df for _, df in dfs], ignore_index=True)
-            save_df_to_excel(merged_df, merged_path, sheet_name='Merged')
-        else:
-            # create workbook with each file as sheet
-            wb = Workbook()
-            if wb.active is not None:
-                wb.remove(wb.active)
-            for f, sheets in sheetmaps.items():
-                short = os.path.splitext(os.path.basename(f))[0][:25]
-                for sheetname, df in sheets.items():
-                    title = f"{short}__{sheetname}"[:31]
-                    ws = wb.create_sheet(title=title)
-                    # Use fast dataframe_to_rows instead of slow iterrows
-                    for row in dataframe_to_rows(df, index=False, header=True):
-                        ws.append(row)
-            wb.save(merged_path)
-
-        apply_openpyxl_autofit_and_theme(merged_path)
 
     def cancel_processing(self):
         """Cancel the current merge operation."""

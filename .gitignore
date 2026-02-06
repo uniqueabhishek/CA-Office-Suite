@@ -1,8 +1,10 @@
 venv/
+.venv/
 __pycache__/
 *.pyc
 legacy_backup/
 uploads/
+flask_app/uploads/
 
 cloudflared.exe
 *.spec
@@ -12,3 +14,4 @@ test_data.pdf
 create_test_pdf.py
 BS and IE in charity Format 23-24.pdf
 BS and IE in charity Format 23-24.xlsx
+.claude/settings.local.json

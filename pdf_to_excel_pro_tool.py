@@ -10,7 +10,6 @@ from PyQt5.QtWidgets import (
     QHBoxLayout,
     QFileDialog,
     QMessageBox,
-    QDesktopWidget,
     QCheckBox,
     QTextEdit,
     QFrame,
@@ -24,15 +23,7 @@ class PDFTableExtractor(QWidget):
         self.setWindowTitle("PDF to Excel PRO Tool")
         # self.resize(1600, 800)
         self.checkboxes = []
-        # self.center_window()
         self.setup_ui()
-
-    def center_window(self):
-        screen_geometry = QDesktopWidget().availableGeometry()
-        screen_center = screen_geometry.center()
-        frame_geometry = self.frameGeometry()
-        frame_geometry.moveCenter(screen_center)
-        self.move(frame_geometry.topLeft())
 
     def setup_ui(self):
         # main_widget = QWidget()

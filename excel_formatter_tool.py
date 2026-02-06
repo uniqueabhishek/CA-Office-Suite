@@ -21,84 +21,10 @@ from PyQt5.QtWidgets import (
     QGroupBox,
 )
 
-# For writing styles and fixing column width
-from openpyxl import load_workbook
-from openpyxl.utils import get_column_letter
-from openpyxl.styles import Font, PatternFill, Border, Side, Alignment
-
 # Import shared utilities from core modules
 from core.excel_utils import list_excel_files_in_folder, read_file_to_df
 from workers.formatter_worker import FormatterWorker
 from ui.components import ProgressLogger
-
-# Note: Utility functions list_excel_files_in_folder, read_file_to_df, read_all_sheets,
-# save_df_to_excel, and apply_formatting_to_workbook are now imported from core modules above.
-
-
-def apply_openpyxl_autofit_and_theme(
-    path, sheet_name=None, number_format_map=None, apply_theme=False
-):
-    """
-    DEPRECATED: Loads workbook from file, applies formatting, then saves.
-    Use apply_formatting_to_workbook() instead for better performance.
-
-    This function is kept for backward compatibility but results in 2x I/O operations.
-    """
-    wb = load_workbook(path)
-    if sheet_name:
-        if sheet_name in wb.sheetnames:
-            ws_list = [wb[sheet_name]]
-        else:
-            ws_list = []
-    else:
-        ws_list = [wb[s] for s in wb.sheetnames]
-
-    thin = Side(border_style="thin", color="000000")
-    for ws in ws_list:
-        if ws is None:
-            continue  # skip if somehow None
-        # format header row if present
-        if ws.max_row >= 1:
-            for cell in ws[1]:
-                # styling code continues
-                cell.font = Font(bold=True)
-                cell.fill = PatternFill("solid", fgColor="DDDDDD")
-                cell.alignment = Alignment(
-                    horizontal="center", vertical="center")
-                cell.border = Border(left=thin, right=thin,
-                                     top=thin, bottom=thin)
-
-        # number formats
-        if number_format_map:
-            headers = [c.value for c in ws[1]]
-            for idx, header in enumerate(headers, start=1):
-                if header in number_format_map:
-                    fmt = number_format_map[header]
-                    letter = get_column_letter(idx)
-                    for r in range(2, ws.max_row + 1):
-                        ws[f"{letter}{r}"].number_format = fmt
-        # autofit
-        for col in ws.columns:
-            max_len = 0
-            col_index = col[0].column
-            if col_index is None or not isinstance(col_index, int):
-                continue
-            col_letter = get_column_letter(col_index)
-
-            # Optimized: removed exception handling from hot loop (10-100x faster)
-            for cell in col:
-                val = cell.value
-                length = 0 if val is None else len(str(val))
-                if length > max_len:
-                    max_len = length
-            ws.column_dimensions[col_letter].width = min(
-                max(50, max_len + 2), 100)
-
-    if apply_theme:
-        pass
-
-    wb.save(path)
-
 
 # ---------- Core data-cleaning logic ----------
 

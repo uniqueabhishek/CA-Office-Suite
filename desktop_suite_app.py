@@ -7,16 +7,29 @@ from PyQt5.QtWidgets import (
     QWidget,
     QLabel,
     QStyleFactory,
-    QDesktopWidget,
     QScrollArea
 )
 from PyQt5.QtGui import QFont
 from PyQt5.QtCore import Qt
 
 # Import our tools as widgets
-from pdf_to_excel_pro_tool import PDFTableExtractor
-from excel_formatter_tool import ExcelCleanerWindow
-from excel_merge_split_tool import ExcelMergeSplitWindow
+try:
+    from pdf_to_excel_pro_tool import PDFTableExtractor
+except ImportError as e:
+    PDFTableExtractor = None
+    print(f"Warning: PDF tool failed to load: {e}")
+
+try:
+    from excel_formatter_tool import ExcelCleanerWindow
+except ImportError as e:
+    ExcelCleanerWindow = None
+    print(f"Warning: Excel Formatter tool failed to load: {e}")
+
+try:
+    from excel_merge_split_tool import ExcelMergeSplitWindow
+except ImportError as e:
+    ExcelMergeSplitWindow = None
+    print(f"Warning: Merge & Split tool failed to load: {e}")
 
 # Modern Office Professional Theme
 MODERN_STYLESHEET = """
@@ -226,9 +239,11 @@ class DesktopSuiteApp(QMainWindow):
 
     def center_window(self):
         """Center the window on the screen"""
+        screen = QApplication.primaryScreen()
+        if screen is None:
+            return
         frame_geometry = self.frameGeometry()
-        screen_center = QDesktopWidget().availableGeometry().center()
-        frame_geometry.moveCenter(screen_center)
+        frame_geometry.moveCenter(screen.availableGeometry().center())
         self.move(frame_geometry.topLeft())
 
     def setup_ui(self):
@@ -256,26 +271,23 @@ class DesktopSuiteApp(QMainWindow):
         self.tabs.setDocumentMode(False)
 
         # Add Tools as Tabs with scroll areas
-        self.pdf_tool = PDFTableExtractor()
-        self.formatter_tool = ExcelCleanerWindow()
-        self.merge_split_tool = ExcelMergeSplitWindow()
+        tools = [
+            (PDFTableExtractor, "PDF to Excel"),
+            (ExcelCleanerWindow, "Excel Formatter"),
+            (ExcelMergeSplitWindow, "Merge & Split"),
+        ]
 
-        # Wrap each tool in a scroll area to handle overflow
-        pdf_scroll = QScrollArea()
-        pdf_scroll.setWidget(self.pdf_tool)
-        pdf_scroll.setWidgetResizable(True)
-
-        formatter_scroll = QScrollArea()
-        formatter_scroll.setWidget(self.formatter_tool)
-        formatter_scroll.setWidgetResizable(True)
-
-        merge_scroll = QScrollArea()
-        merge_scroll.setWidget(self.merge_split_tool)
-        merge_scroll.setWidgetResizable(True)
-
-        self.tabs.addTab(pdf_scroll, "PDF to Excel")
-        self.tabs.addTab(formatter_scroll, "Excel Formatter")
-        self.tabs.addTab(merge_scroll, "Merge & Split")
+        for tool_class, tab_name in tools:
+            if tool_class is not None:
+                widget = tool_class()
+                scroll = QScrollArea()
+                scroll.setWidget(widget)
+                scroll.setWidgetResizable(True)
+                self.tabs.addTab(scroll, tab_name)
+            else:
+                error_label = QLabel(f"{tab_name} tool failed to load. Check dependencies.")
+                error_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+                self.tabs.addTab(error_label, f"{tab_name} (Error)")
 
         content_layout.addWidget(self.tabs)
         layout.addWidget(content_container)
