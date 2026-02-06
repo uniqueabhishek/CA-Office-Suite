@@ -2,49 +2,80 @@
 {% block title %}Merge & Split | CA Office Suite{% endblock %}
 
 {% block content %}
-<form action="{{ url_for('merge') }}" method="post" enctype="multipart/form-data">
+<div style="display: grid; grid-template-columns: 400px 1fr; gap: 20px; width: 100%; box-sizing: border-box; flex: 1;">
 
-    <!-- 1. File Selection -->
-    <div class="group-box">
-        <span class="group-title">1. File Selection</span>
-        <label class="form-label">Select Excel files to Merge OR Split:</label>
-        <input type="file" name="files" class="form-control" multiple accept=".xlsx,.xls,.csv" required>
-        <div class="mt-2 text-muted">
-            You can select multiple files at once.
+    <!-- Left Panel: Controls -->
+    <form action="{{ url_for('merge') }}" method="post" enctype="multipart/form-data" style="display: flex; flex-direction: column; height: 100%;">
+
+        <!-- 1. File Selection -->
+        <div class="group-box" style="margin-top: 0;">
+            <span class="group-title">1. File Selection</span>
+            <label class="form-label">Select Excel files to Merge OR Split:</label>
+            <input type="file" name="files" class="form-control" multiple accept=".xlsx,.xls,.csv" required>
+            <div class="mt-2 text-muted">
+                You can select multiple files at once.
+            </div>
+        </div>
+
+        <!-- 2. Select Operation -->
+        <div class="group-box">
+            <span class="group-title">2. Select Operation</span>
+
+            <div class="checkbox-row">
+                <input type="radio" name="operation" id="op_merge" value="merge" checked>
+                <label for="op_merge" class="fw-bold">Merge selected files into one workbook</label>
+            </div>
+            <div style="margin-left: 25px; margin-bottom: 15px;">
+                <label>Merged Filename:</label>
+                <input type="text" name="merged_filename" value="merged_output.xlsx" class="form-control" style="width: 100%;">
+            </div>
+
+            <div class="checkbox-row">
+                <input type="radio" name="operation" id="op_split" value="split">
+                <label for="op_split" class="fw-bold">Split workbook sheets into separate files</label>
+            </div>
+        </div>
+
+        <!-- 3. Process -->
+        <div class="group-box">
+            <span class="group-title">3. Process</span>
+            <button type="submit" class="btn btn-primary" style="width: 100%;">Start Processing</button>
+        </div>
+
+        <div class="group-box" style="flex: 1; display: flex; flex-direction: column; margin-bottom: 0;">
+            <span class="group-title">Log / Report</span>
+            <div style="flex: 1; min-height: 100px; background: #fff; border: 1px solid #ddd; padding: 10px; color: #555;">
+                Waiting for input...
+            </div>
+        </div>
+
+    </form>
+
+    <!-- Right Panel: Hero Section -->
+    <div style="background: #f9f9f9; border: 1px solid #ddd; display: flex; align-items: center; justify-content: center; border-radius: 6px;">
+        <div class="engine-showcase" style="text-align: center; padding: 40px; max-width: 550px;">
+            <div style="margin-bottom: 20px;">
+                <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#107c41" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
+                    <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
+                    <line x1="12" y1="11" x2="12" y2="17"></line>
+                    <line x1="9" y1="14" x2="15" y2="14"></line>
+                </svg>
+            </div>
+
+            <h2 style="color: #2c3e50; font-weight: 600; margin-bottom: 12px; font-size: 1.5em; letter-spacing: -0.5px;">Workbook Merge & Split Engine</h2>
+            <div style="height: 3px; width: 40px; background: #107c41; margin: 0 auto 20px auto; border-radius: 2px;"></div>
+
+            <p style="color: #555; line-height: 1.6; margin-bottom: 25px; font-size: 1.05em;">
+                <strong>Merge</strong> multiple Excel files into a single workbook, or <strong>Split</strong> a multi-sheet workbook into individual files. Handles column matching automatically.
+            </p>
+
+            <div style="display: inline-flex; align-items: center; background: #fff; border: 1px solid #ddd; color: #666; padding: 6px 14px; border-radius: 20px; font-size: 0.85em; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                <div style="width: 8px; height: 8px; background: #28a745; border-radius: 50%; margin-right: 8px;"></div>
+                Engine Ready • Select files to begin...
+            </div>
         </div>
     </div>
 
-    <!-- 2. Select Operation -->
-    <div class="group-box">
-        <span class="group-title">2. Select Operation</span>
-
-        <div class="checkbox-row">
-            <input type="radio" name="operation" id="op_merge" value="merge" checked>
-            <label for="op_merge" class="fw-bold">Merge selected files into one workbook</label>
-        </div>
-        <div style="margin-left: 25px; margin-bottom: 15px;">
-            <label>Merged Filename:</label>
-            <input type="text" name="merged_filename" value="merged_output.xlsx" class="form-control" style="width: 300px; display: inline-block;">
-        </div>
-
-        <div class="checkbox-row">
-            <input type="radio" name="operation" id="op_split" value="split">
-            <label for="op_split" class="fw-bold">Split workbook sheets into separate files</label>
-        </div>
-    </div>
-
-    <!-- 3. Process -->
-    <div class="group-box">
-        <span class="group-title">3. Process</span>
-        <button type="submit" class="btn btn-primary" style="width: 100%;">Start Processing</button>
-    </div>
-
-    <div class="group-box">
-        <span class="group-title">Log / Report</span>
-        <div style="min-height: 100px; background: #fff; border: 1px solid #ddd; padding: 10px; color: #555;">
-            Waiting for input...
-        </div>
-    </div>
-
-</form>
+</div>
 {% endblock %}
