@@ -2,6 +2,7 @@ venv/
 .venv/
 __pycache__/
 *.pyc
+.pytest_cache/
 legacy_backup/
 uploads/
 flask_app/uploads/

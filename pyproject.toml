@@ -2,7 +2,9 @@
 name = "ca-office-suite"
 version = "2.1.0"
 description = "Comprehensive Office Suite for CA Firms"
-requires-python = ">=3.10"
+# Upper bound tracks the numpy<2 pin below: numpy 1.x ships no wheels past
+# CPython 3.12, so a 3.13+ environment would fall back to a source build.
+requires-python = ">=3.10,<3.13"
 readme = "README.md"
 dependencies = [
     "PyQt5==5.15.11",
@@ -18,13 +20,50 @@ dependencies = [
     "Pillow>=9.0.0,<11.0.0",
     "flask>=3.1.2",
     "werkzeug>=3.1.5",
-    "gunicorn>=25.0.1",
+    # Production WSGI server for the Flask app (see Procfile). Gunicorn needs
+    # fcntl, so it is skipped on Windows development machines.
+    "gunicorn>=25.0.1; sys_platform != 'win32'",
     "requests>=2.28.0,<3.0.0",
 ]
+
+[tool.uv]
+# The suite is run from the repo root, not installed as a distribution, so uv
+# manages the environment without building this project itself.
+package = false
+
+# Both formatters must agree with the 120-column limit in .flake8, otherwise
+# running them would introduce the very errors flake8 then reports.
+[tool.black]
+line-length = 120
+
+[tool.isort]
+profile = "black"
+line_length = 120
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-q"
+
+# flask_app/ is a flat import root rather than a package: app.py and utils.py
+# import each other by bare name, and gunicorn runs with --chdir flask_app.
+# Putting it on mypy_path lets the type checker resolve those the same way.
+[tool.mypy]
+python_version = "3.10"
+mypy_path = [".", "flask_app"]
+ignore_missing_imports = true
+exclude = "^(\\.venv|build|dist|legacy_backup|uploads)/"
+
+[tool.pylint.main]
+# PyQt5 is a C extension, so pylint cannot see its members by static analysis
+# and reports every widget import as no-name-in-module. Loading the extension
+# lets it introspect the real modules instead.
+extension-pkg-allow-list = ["PyQt5"]
+
+[tool.pylint.typecheck]
+# Loading the extension still leaves pylint blind to the members of PyQt5's sip
+# enum types, so Qt.AlignmentFlag.AlignCenter reads as no-member even though it
+# resolves at runtime (== 132). Leave that one class uninspected.
+ignored-classes = ["AlignmentFlag"]
 
 [dependency-groups]
 dev = [
@@ -38,15 +77,18 @@ dev = [
     "pylint>=2.12.0,<4.0.0",
     "mypy>=0.950,<2.0.0",
     "types-python-dateutil>=2.8.0",
+    "types-requests>=2.28.0",
     "sphinx>=4.5.0,<8.0.0",
     "sphinx-rtd-theme>=1.0.0,<3.0.0",
     "recommonmark>=0.7.0,<1.0.0",
-    "build>=0.7.0,<2.0.0",
-    "pyinstaller>=5.0.0,<7.0.0",
-    "wheel>=0.37.0,<1.0.0",
-    "setuptools>=60.0.0,<70.0.0",
     "memory-profiler>=0.60.0,<1.0.0",
     "line-profiler>=3.5.0,<5.0.0",
     "ipython>=8.0.0,<9.0.0",
     "ipdb>=0.13.0,<1.0.0",
+]
+
+# Only needed to freeze the desktop app into an executable. Not installed by a
+# plain `uv sync`; run `uv sync --group packaging` when building a release.
+packaging = [
+    "pyinstaller>=5.0.0,<7.0.0",
 ]
