@@ -11,6 +11,24 @@ from openpyxl.utils import get_column_letter
 from openpyxl.utils.dataframe import dataframe_to_rows
 from openpyxl.styles import Font, PatternFill, Border, Side, Alignment
 
+from config.constants import MIN_COLUMN_WIDTH, MAX_COLUMN_WIDTH
+
+
+def _fitted_width(max_len):
+    """
+    Convert the longest cell length in a column into an Excel column width.
+
+    The width tracks the content, then is clamped so that narrow columns stay
+    readable and a single long cell cannot push a column off the page.
+
+    Args:
+        max_len (int): Length of the longest value in the column
+
+    Returns:
+        int: Column width in characters
+    """
+    return max(MIN_COLUMN_WIDTH, min(max_len + 2, MAX_COLUMN_WIDTH))
+
 
 def save_df_to_excel(
     df, path, sheet_name="Sheet1", number_format_map=None, apply_theme=False
@@ -82,8 +100,7 @@ def save_df_to_excel(
             if length > max_len:
                 max_len = length
 
-        # The width calculation remains the same
-        ws.column_dimensions[col_letter].width = min(max(50, max_len + 2), 100)
+        ws.column_dimensions[col_letter].width = _fitted_width(max_len)
 
     # ensure directory exists before saving
     output_directory = os.path.dirname(path)
@@ -148,6 +165,6 @@ def apply_formatting_to_workbook(wb, number_format_map=None, apply_theme=False, 
                     length = 0 if val is None else len(str(val))
                     if length > max_len:
                         max_len = length
-                ws.column_dimensions[col_letter].width = min(max(50, max_len + 2), 100)
+                ws.column_dimensions[col_letter].width = _fitted_width(max_len)
 
     return wb

@@ -19,3 +19,15 @@ WINDOW_HEIGHT = 650
 
 # Processing settings
 MAX_PREVIEW_ROWS = 50
+
+# Generated worksheet column widths (in characters).
+# Widths are sized to the longest cell value, then clamped to this range.
+MIN_COLUMN_WIDTH = 10
+MAX_COLUMN_WIDTH = 60
+
+# Excel hard limit on worksheet name length
+MAX_SHEET_NAME_LENGTH = 31
+
+# Web upload settings
+ALLOWED_UPLOAD_EXTENSIONS = (".xlsx", ".xls", ".csv")
+UPLOAD_RETENTION_SECONDS = 60 * 60  # Delete stray uploads older than 1 hour
