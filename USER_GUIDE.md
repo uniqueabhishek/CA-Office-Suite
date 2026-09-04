@@ -76,7 +76,7 @@ The Excel Formatter tool automatically cleans messy Excel and CSV files by remov
 
 **Option B: Overwrite Original Files**
 1. Select **"Overwrite original files"** radio button
-2.   **Warning**: This permanently modifies your original files!
+2. **Warning**: This permanently modifies your original files!
 3. Make backups before using this option
 
 ---
@@ -87,11 +87,11 @@ The Excel Formatter tool automatically cleans messy Excel and CSV files by remov
 
 | Option | What It Does | Example |
 |--------|--------------|---------|
-| **Convert numbers stored as text** | Detects numbers saved as text and converts them | `"12345"` ’ `12345` |
-| **Trim leading/trailing spaces** | Removes extra spaces at start/end of cells | `"  Hello  "` ’ `"Hello"` |
-| **Normalize date format** | Converts dates to consistent format | `12/31/2024` ’ `31-12-2024` |
-| **Apply number format** | Formats numbers with decimals/commas | `1234.5` ’ `1,234.50` |
-| **Apply text case** | Changes text to UPPER, lower, or Title Case | `hello world` ’ `Hello World` |
+| **Convert numbers stored as text** | Detects numbers saved as text and converts them | `"12345"` -> `12345` |
+| **Trim leading/trailing spaces** | Removes extra spaces at start/end of cells | `"  Hello  "` -> `"Hello"` |
+| **Normalize date format** | Converts dates to consistent format | `12/31/2024` -> `31-12-2024` |
+| **Apply number format** | Formats numbers with decimals/commas | `1234.5` -> `1,234.50` |
+| **Apply text case** | Changes text to UPPER, lower, or Title Case | `hello world` -> `Hello World` |
 
 **Date Format Options**:
 - `dd-mm-yyyy` (Default): 31-12-2024
@@ -101,7 +101,7 @@ The Excel Formatter tool automatically cleans messy Excel and CSV files by remov
 **Number Format Options**:
 - **2 decimals** (Default): 1,234.50
 - **No decimals**: 1,235
-- **Currency**: ¹1,234.50 (customize symbol in text box)
+- **Currency**: â‚¹1,234.50 (customize symbol in text box)
 
 **Text Case Options**:
 - **none**: No change
@@ -130,7 +130,7 @@ The Excel Formatter tool automatically cleans messy Excel and CSV files by remov
 3. **Preview table** on the right shows:
    - First 50 rows
    - All selected transformations applied
-   -  **No changes saved yet** - this is just a preview!
+   - **No changes saved yet** - this is just a preview!
 
 **Review the preview** to ensure:
 - Dates are formatted correctly
@@ -150,14 +150,14 @@ The Excel Formatter tool automatically cleans messy Excel and CSV files by remov
    - Completion status
 
 **During Processing**:
--  **UI remains responsive** (you can see updates)
-- ø Click **"Cancel"** to stop processing
-- =Ê Progress bar shows completion percentage
+- **UI remains responsive** (you can see updates)
+- Click **"Cancel"** to stop processing
+- Progress bar shows completion percentage
 
 **After Processing**:
--  Success dialog appears
-- =Á Check output folder for processed files
-- =Ä Log shows summary of all operations
+- Success dialog appears
+- Check output folder for processed files
+- Log shows summary of all operations
 
 ---
 
@@ -169,10 +169,10 @@ The Excel Formatter tool automatically cleans messy Excel and CSV files by remov
 **Steps**:
 1. Add CSV file
 2. Enable:
-   -  Convert numbers stored as text
-   -  Trim leading/trailing spaces
-   -  Normalize date format
-   -  Remove duplicate rows
+   - Convert numbers stored as text
+   - Trim leading/trailing spaces
+   - Normalize date format
+   - Remove duplicate rows
 3. Preview and apply
 
 **Result**: Clean, properly formatted Excel file
@@ -185,10 +185,10 @@ The Excel Formatter tool automatically cleans messy Excel and CSV files by remov
 **Steps**:
 1. Add Excel file
 2. Enable:
-   -  Apply number format (2 decimals)
-   -  Apply text case (Title Case)
-   -  Auto-fit column widths
-   -  Apply Excel theme
+   - Apply number format (2 decimals)
+   - Apply text case (Title Case)
+   - Auto-fit column widths
+   - Apply Excel theme
 3. Apply to all
 
 **Result**: Professional-looking report with consistent formatting
@@ -368,9 +368,9 @@ Combine multiple Excel/CSV files into a single workbook, or split a workbook int
 1. **Excel Formatter** tab
 2. **Add Folder** with 50 files
 3. Enable common fixes:
-   -  Trim whitespace
-   -  Convert numbers
-   -  Normalize dates
+   - Trim whitespace
+   - Convert numbers
+   - Normalize dates
 4. **Preview** one file
 5. **Apply to All**
 6. Check **"Processed"** folder
@@ -491,7 +491,7 @@ python desktop_suite_app.py
 
 ### Performance Tips
 
- **DO**:
+ **DO**:
 - Close other applications when processing large files
 - Use "Add Folder" for batch operations
 - Preview before processing all files
@@ -506,7 +506,7 @@ L **DON'T**:
 
 ### Data Safety Tips
 
- **DO**:
+ **DO**:
 - Always create backups before using "Overwrite"
 - Test transformations on sample file first
 - Preview changes before applying to all files
@@ -535,9 +535,9 @@ L **DON'T**:
 **File Organization**:
 ```
 Project/
-   Original_Files/          # Keep originals here
-   Processed/               # Auto-generated output
-   Archive/                 # Move completed files here
+ Original_Files/          # Keep originals here
+ Processed/               # Auto-generated output
+ Archive/                 # Move completed files here
 ```
 
 ---
@@ -545,14 +545,14 @@ Project/
 ### Quality Control Tips
 
 **Always verify**:
-1.  Check first file output manually
-2.  Spot-check random files in batch
-3.  Verify row counts match (no data loss)
-4.  Check formulas still work (if any)
-5.  Validate totals and summaries
+1. Check first file output manually
+2. Spot-check random files in batch
+3. Verify row counts match (no data loss)
+4. Check formulas still work (if any)
+5. Validate totals and summaries
 
 **Common verification methods**:
-- Compare file sizes (similar ± formatting)
+- Compare file sizes (similar -> formatting)
 - Check row count: Original vs Processed
 - Verify key totals in summary rows
 - Open in Excel and scan for errors
@@ -565,10 +565,10 @@ Project/
 
 | Format | Extension | Read | Write | Notes |
 |--------|-----------|------|-------|-------|
-| Excel 2007+ | .xlsx |  |  | Recommended |
-| Excel 97-2003 | .xls |  | L | Converted to .xlsx |
-| CSV | .csv |  |  | UTF-8 encoding |
-| PDF | .pdf |  | L | Table extraction only |
+| Excel 2007+ | .xlsx |  |  | Recommended |
+| Excel 97-2003 | .xls |  | L | Converted to .xlsx |
+| CSV | .csv |  |  | UTF-8 encoding |
+| PDF | .pdf |  | L | Table extraction only |
 
 ### File Size Limits
 

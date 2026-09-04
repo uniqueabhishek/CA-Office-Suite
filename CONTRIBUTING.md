@@ -24,11 +24,11 @@ We are committed to providing a welcoming and inspiring community for all. Pleas
 
 ### Expected Behavior
 
--  Be respectful and inclusive
--  Welcome newcomers and help them get started
--  Accept constructive criticism gracefully
--  Focus on what's best for the community
--  Show empathy towards other community members
+- Be respectful and inclusive
+- Welcome newcomers and help them get started
+- Accept constructive criticism gracefully
+- Focus on what's best for the community
+- Show empathy towards other community members
 
 ### Unacceptable Behavior
 
@@ -99,12 +99,12 @@ Screenshots, mockups, or examples.
 ### Contributing Code
 
 **Types of contributions we're looking for**:
-- = Bug fixes
+- = Bug fixes
 - ( New features
-- =Ý Documentation improvements
-- ¡ Performance optimizations
-- >ê Test coverage improvements
-- <¨ UI/UX enhancements
+- Documentation improvements
+- Performance optimizations
+- Test coverage improvements
+- UI/UX enhancements
 
 ---
 
@@ -249,12 +249,12 @@ Describe testing performed.
 5. **Merge**: PR is merged to main branch
 
 **What reviewers look for**:
--  Code quality and style
--  Test coverage
--  Documentation completeness
--  Performance impact
--  Security considerations
--  Backward compatibility
+- Code quality and style
+- Test coverage
+- Documentation completeness
+- Performance impact
+- Security considerations
+- Backward compatibility
 
 ---
 
@@ -467,12 +467,12 @@ docs(readme): update installation instructions
 **Test file structure**:
 ```
 tests/
-   unit/
-      test_feature.py
-   integration/
-      test_workflow.py
-   fixtures/
-       sample_data.xlsx
+ unit/
+    test_feature.py
+ integration/
+    test_workflow.py
+ fixtures/
+     sample_data.xlsx
 ```
 
 **Test example**:
@@ -614,6 +614,4 @@ By contributing to CA Firm Office Suite, you agree that your contributions will 
 
 ---
 
-**Thank you for contributing to CA Firm Office Suite!** <‰
-
-Your contributions help make this tool better for the entire CA community.
+**Thank you for contributing to CA Firm Office Suite!** Your contributions help make this tool better for the entire CA community.

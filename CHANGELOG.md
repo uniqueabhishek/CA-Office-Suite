@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [2.0.0] - 2024-12-06
 
-### <‰ Major Release - Architectural Refactoring & Performance Optimization
+### Major Release - Architectural Refactoring & Performance Optimization
 
 This release represents a complete architectural overhaul with massive performance improvements and code quality enhancements.
 
@@ -108,7 +108,7 @@ This release represents a complete architectural overhaul with massive performan
 
 ## [1.0.0] - 2024-10-01
 
-### <‰ Initial Release
+### Initial Release
 
 ### Added
 - **Desktop Suite Application**
@@ -220,14 +220,14 @@ This release represents a complete architectural overhaul with massive performan
    ```
 
 2. **Utility functions moved**:
-   - `list_excel_files_in_folder()` ’ `core/excel_utils.py`
-   - `read_file_to_df()` ’ `core/excel_utils.py`
-   - `read_all_sheets()` ’ `core/excel_utils.py`
-   - `save_df_to_excel()` ’ `core/excel_writer.py`
-   - `apply_formatting_to_workbook()` ’ `core/excel_writer.py`
+   - `list_excel_files_in_folder()` -> `core/excel_utils.py`
+   - `read_file_to_df()` -> `core/excel_utils.py`
+   - `read_all_sheets()` -> `core/excel_utils.py`
+   - `save_df_to_excel()` -> `core/excel_writer.py`
+   - `apply_formatting_to_workbook()` -> `core/excel_writer.py`
 
 3. **Constants moved**:
-   - `SUPPORTED_EXTENSIONS` ’ `config/constants.py`
+   - `SUPPORTED_EXTENSIONS` -> `config/constants.py`
 
 4. **Threading model**:
    - Excel Formatter now uses `FileProcessorThread` (QThread)
