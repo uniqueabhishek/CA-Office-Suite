@@ -3,7 +3,9 @@ This module defines the blueprint and routes for the Balance Sheet generation fe
 It handles multiple pages (tabs) of the balance sheet form and integrates with the
 Excel generation logic to produce the final downloadable report.
 """
-from flask import Blueprint, render_template, request, session, redirect, url_for, send_file  # pylint: disable=import-error
+from flask import (  # pylint: disable=import-error
+    Blueprint, render_template, request, session, redirect, url_for, send_file
+)
 from blueprints.excel_gen import generate_balance_sheet  # pylint: disable=import-error
 
 balance_sheet_bp = Blueprint('balance_sheet', __name__, template_folder='templates')
@@ -40,7 +42,10 @@ def page1():
         return redirect(url_for('balance_sheet.page2'))
 
     data = session.get('bs_page1', {})
-    return render_template('balance_sheet/page1.html', active_tab='page1', data=data, page_title='Page 1 (Schedules 1-4)')
+    return render_template(
+        'balance_sheet/page1.html',
+        active_tab='page1', data=data, page_title='Page 1 (Schedules 1-4)'
+    )
 
 
 @balance_sheet_bp.route('/balance-sheet/page2', methods=['GET', 'POST'])
@@ -51,7 +56,10 @@ def page2():
         return redirect(url_for('balance_sheet.page3'))
 
     data = session.get('bs_page2', {})
-    return render_template('balance_sheet/page2.html', active_tab='page2', data=data, page_title='Page 2 (Schedules 8-13)')
+    return render_template(
+        'balance_sheet/page2.html',
+        active_tab='page2', data=data, page_title='Page 2 (Schedules 8-13)'
+    )
 
 
 @balance_sheet_bp.route('/balance-sheet/page3', methods=['GET', 'POST'])
@@ -62,7 +70,10 @@ def page3():
         return redirect(url_for('balance_sheet.page4'))
 
     data = session.get('bs_page3', {})
-    return render_template('balance_sheet/page3.html', active_tab='page3', data=data, page_title='Page 3 (Investments)')
+    return render_template(
+        'balance_sheet/page3.html',
+        active_tab='page3', data=data, page_title='Page 3 (Investments)'
+    )
 
 
 @balance_sheet_bp.route('/balance-sheet/page4', methods=['GET', 'POST'])
@@ -73,7 +84,10 @@ def page4():
         return redirect(url_for('balance_sheet.page4c'))
 
     data = session.get('bs_page4', {})
-    return render_template('balance_sheet/page4.html', active_tab='page4', data=data, page_title='Page 4 (Assets)')
+    return render_template(
+        'balance_sheet/page4.html',
+        active_tab='page4', data=data, page_title='Page 4 (Assets)'
+    )
 
 
 @balance_sheet_bp.route('/balance-sheet/page4c', methods=['GET', 'POST'])
@@ -84,7 +98,10 @@ def page4c():
         return redirect(url_for('balance_sheet.page4d'))
 
     data = session.get('bs_page4c', {})
-    return render_template('balance_sheet/page4c.html', active_tab='page4c', data=data, page_title='Page 4C (Contribution)')
+    return render_template(
+        'balance_sheet/page4c.html',
+        active_tab='page4c', data=data, page_title='Page 4C (Contribution)'
+    )
 
 
 @balance_sheet_bp.route('/balance-sheet/page4d', methods=['GET', 'POST'])
@@ -95,7 +112,10 @@ def page4d():
         return redirect(url_for('balance_sheet.page_winman'))
 
     data = session.get('bs_page4d', {})
-    return render_template('balance_sheet/page4d.html', active_tab='page4d', data=data, page_title='Page 4D (History)')
+    return render_template(
+        'balance_sheet/page4d.html',
+        active_tab='page4d', data=data, page_title='Page 4D (History)'
+    )
 
 
 @balance_sheet_bp.route('/balance-sheet/page_winman', methods=['GET', 'POST'])
@@ -106,7 +126,10 @@ def page_winman():
         return redirect(url_for('balance_sheet.page_corpus'))
 
     data = session.get('bs_winman', {})
-    return render_template('balance_sheet/page_winman.html', active_tab='page_winman', data=data, page_title='Winman')
+    return render_template(
+        'balance_sheet/page_winman.html',
+        active_tab='page_winman', data=data, page_title='Winman'
+    )
 
 
 @balance_sheet_bp.route('/balance-sheet/page_corpus', methods=['GET', 'POST'])
@@ -117,7 +140,10 @@ def page_corpus():
         return redirect(url_for('balance_sheet.page_accumulation'))
 
     data = session.get('bs_corpus', {})
-    return render_template('balance_sheet/page_corpus.html', active_tab='page_corpus', data=data, page_title='Corpus Fund')
+    return render_template(
+        'balance_sheet/page_corpus.html',
+        active_tab='page_corpus', data=data, page_title='Corpus Fund'
+    )
 
 
 @balance_sheet_bp.route('/balance-sheet/page_accumulation', methods=['GET', 'POST'])

@@ -36,13 +36,9 @@ def generate_balance_sheet(session_data):
     sch3_particulars = data_p1.get('sch3_particulars[]', [])
     sch3_amounts = data_p1.get('sch3_amount[]', [])
 
-    # Flask form lists might come as lists or single items depending on library version,
-    # but request.form.to_dict(flat=False) is needed for lists.
-    # The current session storage uses request.form.to_dict() which flattens by default!
-    # CHECK: balance_sheet.py uses request.form.to_dict(). This destroys repeated keys (lists).
-    # CRITICAL FIX NEEDED in balance_sheet.py to save lists correctly.
-    # For now, assuming we handle it, let's write the code.
-
+    # balance_sheet.get_form_data() preserves repeated keys (those ending in [])
+    # as lists, so these arrive as parallel lists. The scalar branch below is a
+    # safety net for sessions saved before that helper existed.
     if isinstance(sch3_particulars, list):
         for p, a in zip(sch3_particulars, sch3_amounts):
             ws1.append([p, a])

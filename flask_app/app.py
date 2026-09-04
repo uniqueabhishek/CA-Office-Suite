@@ -5,6 +5,7 @@ merging/splitting, and hosts the Balance Sheet generator.
 """
 import os
 import sys
+import time
 import uuid
 import traceback
 
@@ -20,16 +21,77 @@ from werkzeug.utils import secure_filename  # noqa: E402
 
 import utils  # noqa: E402
 from blueprints.balance_sheet import balance_sheet_bp  # noqa: E402
+from config.constants import ALLOWED_UPLOAD_EXTENSIONS, UPLOAD_RETENTION_SECONDS  # noqa: E402
 
 
 app = Flask(__name__)
-app.secret_key = 'supersecretkey_change_this_in_prod'
+
+# The signing key must never be hardcoded: anyone who knows it can forge
+# session cookies. Set SECRET_KEY in the environment for any real deployment.
+app.secret_key = os.environ.get('SECRET_KEY')
+if not app.secret_key:
+    if os.environ.get('FLASK_ENV') == 'production':
+        raise RuntimeError(
+            "SECRET_KEY environment variable must be set when FLASK_ENV=production"
+        )
+    app.secret_key = 'dev-only-insecure-key'
+    print("WARNING: SECRET_KEY not set. Using an insecure development key.")
+
 app.register_blueprint(balance_sheet_bp)
-app.config['UPLOAD_FOLDER'] = os.path.join(os.getcwd(), 'uploads')
+# Anchored to this file, not the working directory, so uploads land in the same
+# place whether the app is started from the repo root or from flask_app/.
+app.config['UPLOAD_FOLDER'] = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'uploads')
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max limit
 
 # Ensure upload folder exists
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+
+
+# ----------------- UPLOAD HELPERS -----------------
+
+
+def allowed_spreadsheet(filename):
+    """Returns True if the filename has a supported spreadsheet extension."""
+    return bool(filename) and filename.lower().endswith(ALLOWED_UPLOAD_EXTENSIONS)
+
+
+def discard_upload(*paths):
+    """
+    Delete temporary uploads, ignoring files that are already gone.
+
+    Uploads are working files only; leaving them behind grows the upload
+    folder without bound.
+    """
+    for path in paths:
+        if not path:
+            continue
+        try:
+            os.remove(path)
+        except OSError:
+            pass
+
+
+def sweep_stale_uploads():
+    """
+    Remove uploads older than the retention window.
+
+    The PDF flow keeps a file between the upload and the convert request, so it
+    cannot be deleted eagerly. This sweep collects anything abandoned partway
+    through (session expired, browser closed) on the next upload.
+    """
+    folder = app.config['UPLOAD_FOLDER']
+    cutoff = time.time() - UPLOAD_RETENTION_SECONDS
+    try:
+        entries = os.listdir(folder)
+    except OSError:
+        return
+    for name in entries:
+        path = os.path.join(folder, name)
+        try:
+            if os.path.isfile(path) and os.path.getmtime(path) < cutoff:
+                os.remove(path)
+        except OSError:
+            pass
 
 
 # ----------------- PDF TO EXCEL -----------------
@@ -51,26 +113,23 @@ def index():
             flash('No selected file')
             return redirect(request.url)
         if file and file.filename.lower().endswith('.pdf'):
+            sweep_stale_uploads()
             filename = secure_filename(file.filename)
             unique_filename = f"{uuid.uuid4()}_{filename}"
             file_path = os.path.join(app.config['UPLOAD_FOLDER'], unique_filename)
 
-            print(f"DEBUG: Processing upload for {filename}")
             try:
-                print(f"DEBUG: Saving to {file_path}")
                 file.save(file_path)
-
-                print("DEBUG: Extracting tables...")
                 tables = utils.extract_tables_from_pdf(file_path)
-                print(f"DEBUG: Extraction complete. Found {len(tables) if tables else 0} tables.")
 
                 if not tables:
+                    discard_upload(file_path)
                     flash('No tables found in the PDF. Is it a scanned image?')
                     return redirect(request.url)
 
+                # Kept on disk so /convert can re-read the selected tables.
                 session['current_pdf'] = unique_filename
                 session['original_filename'] = filename
-                print("DEBUG: Rendering template.")
                 return render_template(
                     'select_tables.html', tables=tables, filename=filename, active_tab='pdf'
                 )
@@ -78,7 +137,7 @@ def index():
                 # Broad exception catch is intentional for top-level error handling
                 # We want to catch everything during processing to avoid crashing the server
                 # and show a user-friendly flash message instead.
-                print(f"ERROR: {str(e)}")
+                discard_upload(file_path)
                 traceback.print_exc()
                 flash(f'Error processing PDF: {str(e)}')
                 return redirect(request.url)
@@ -122,6 +181,11 @@ def convert():
     except Exception as e:  # pylint: disable=broad-except
         flash(f'Error converting file: {str(e)}')
         return redirect(url_for('index'))
+    finally:
+        # The upload has served its purpose once the workbook is built.
+        discard_upload(file_path)
+        session.pop('current_pdf', None)
+        session.pop('original_filename', None)
 
 
 # ----------------- EXCEL FORMATTER -----------------
@@ -141,8 +205,12 @@ def formatter():
         if file.filename == '':
             flash('No file selected.')
             return redirect(request.url)
+        if not allowed_spreadsheet(file.filename):
+            flash('Invalid file type. Please upload an .xlsx, .xls or .csv file.')
+            return redirect(request.url)
 
         # Save temp file
+        sweep_stale_uploads()
         filename = secure_filename(file.filename)
         temp_path = os.path.join(
             app.config['UPLOAD_FOLDER'], f"fmt_{uuid.uuid4()}_{filename}"
@@ -179,6 +247,8 @@ def formatter():
         except Exception as e:  # pylint: disable=broad-except
             flash(f"Error processing file: {e}")
             return redirect(request.url)
+        finally:
+            discard_upload(temp_path)
 
     return render_template('formatter.html', active_tab='formatter')
 
@@ -198,9 +268,15 @@ def merge():
             flash('No files selected.')
             return redirect(request.url)
 
+        rejected = [f.filename for f in files if not allowed_spreadsheet(f.filename)]
+        if rejected:
+            flash(f"Unsupported file type: {', '.join(rejected)}. Use .xlsx, .xls or .csv.")
+            return redirect(request.url)
+
         operation = request.form.get('operation', 'merge')
 
         # Save all files
+        sweep_stale_uploads()
         saved_paths = []
         original_names = []
         for f in files:
@@ -212,8 +288,11 @@ def merge():
 
         try:
             if operation == 'merge':
-                merged_name = request.form.get('merged_filename', 'merged_output.xlsx')
-                if not merged_name.endswith('.xlsx'):
+                # secure_filename strips any path components a user might submit
+                merged_name = secure_filename(
+                    request.form.get('merged_filename', '') or 'merged_output.xlsx'
+                )
+                if not merged_name.lower().endswith('.xlsx'):
                     merged_name += '.xlsx'
 
                 output_stream = utils.merge_files(saved_paths)
@@ -224,10 +303,8 @@ def merge():
                     download_name=merged_name
                 )
             else:
-                # Split - for web we probably zip the results?
-                # For simplicity, let's just split the FIRST file and return a zip, or warn user.
-                # Implementing split for multiple files in web is complex due to download limit
-                # (one response). We'll use a Zip file.
+                # Split every uploaded file; a single response can only carry one
+                # file, so the resulting sheets are returned as a zip archive.
                 zip_stream = utils.split_files_to_zip(saved_paths, original_names)
                 return send_file(
                     zip_stream,
@@ -238,9 +315,11 @@ def merge():
         except Exception as e:  # pylint: disable=broad-except
             flash(f"Error processing: {e}")
             return redirect(request.url)
+        finally:
+            discard_upload(*saved_paths)
 
     return render_template('merge.html', active_tab='merge')
 
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=os.environ.get('FLASK_DEBUG', '1') == '1')
