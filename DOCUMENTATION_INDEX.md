@@ -34,8 +34,8 @@ This project includes comprehensive documentation covering all aspects from user
 
 | File | Purpose |
 |------|---------|
-| **[requirements.txt](requirements.txt)** | Production dependencies |
-| **[requirements-dev.txt](requirements-dev.txt)** | Development dependencies |
+| **[pyproject.toml](pyproject.toml)** | Dependencies, dev group and pytest configuration |
+| **[uv.lock](uv.lock)** | Pinned dependency versions for reproducible installs |
 | **[LICENSE](LICENSE)** | MIT License terms |
 | **[.flake8](.flake8)** | Code linting configuration |
 
@@ -218,7 +218,8 @@ This project includes comprehensive documentation covering all aspects from user
 
 ---
 
-## = Search Guide
+## =
+ Search Guide
 
 ### Finding Information
 
@@ -301,10 +302,6 @@ L **DON'T**:
 
 ### Related Links
 
-- **GitHub Repository**: https://github.com/your-repo/ca-office-suite
-- **Issue Tracker**: https://github.com/your-repo/ca-office-suite/issues
-- **Discord Community**: https://discord.gg/ca-suite
-- **Email Support**: support@ca-office-suite.com
 
 ### Technology Documentation
 
@@ -323,7 +320,6 @@ L **DON'T**:
 2. **Use GitHub search** across all documentation
 3. **Check the FAQ** in USER_GUIDE.md
 4. **Ask on Discord** - Community support
-5. **Email us** - support@ca-office-suite.com
 
 ---
 
@@ -345,4 +341,3 @@ Our documentation follows these standards:
 
 ---
 
-**Thank you for using CA Firm Office Suite!** If you find any documentation issues or have suggestions for improvement, please [open an issue](https://github.com/your-repo/ca-office-suite/issues) or submit a pull request.

@@ -4,8 +4,8 @@
 
 A high-performance desktop application built with PyQt5 that provides powerful tools for Excel data cleaning, PDF table extraction, and file merging operations. Optimized for CA firms handling large volumes of financial data.
 
-![Version](https://img.shields.io/badge/version-2.0.0-blue)
-![Python](https://img.shields.io/badge/python-3.8+-green)
+![Version](https://img.shields.io/badge/version-2.1.0-blue)
+![Python](https://img.shields.io/badge/python-3.10+-green)
 ![License](https://img.shields.io/badge/license-MIT-orange)
 
 ---
@@ -49,32 +49,31 @@ A high-performance desktop application built with PyQt5 that provides powerful t
 ## 🔧 Installation
 
 ### Prerequisites
-- Python 3.8 or higher
+- [uv](https://docs.astral.sh/uv/) for environment management (it downloads its own Python)
 - Windows, macOS, or Linux
 
-### Step 1: Clone or Download
+### Step 1: Create the environment
 ```bash
-git clone https://github.com/your-repo/ca-office-suite.git
-cd ca-office-suite
+uv venv
 ```
 
 ### Step 2: Install Dependencies
 ```bash
-pip install -r requirements.txt
+uv sync
 ```
 
-**Required packages:**
-```
-PyQt5>=5.15.0
-pandas>=1.3.0
-openpyxl>=3.0.0
-pdfplumber>=0.7.0
-xlrd>=2.0.0
-```
+`uv sync` installs from `uv.lock` for reproducible builds. Dependencies are
+declared in `pyproject.toml` — there is no `requirements.txt`.
+
+**Key packages:** PyQt5, pandas, openpyxl, pdfplumber, xlrd, Flask.
 
 ### Step 3: Run the Application
 ```bash
-python desktop_suite_app.py
+# Desktop suite
+uv run python desktop_suite_app.py
+
+# Web app (development)
+cd flask_app && uv run python app.py
 ```
 
 ---
@@ -108,7 +107,7 @@ python desktop_suite_app.py
 - **OS**: Windows 7/10/11, macOS 10.12+, Linux (Ubuntu 18.04+)
 - **RAM**: 4 GB
 - **Storage**: 100 MB free space
-- **Python**: 3.8+
+- **Python**: 3.10+ (installed by uv)
 
 ### Recommended for Large Files
 - **RAM**: 8 GB or more
@@ -174,7 +173,7 @@ python desktop_suite_app.py
 | [Architecture Guide](ARCHITECTURE.md) | System design and technical architecture |
 | [Developer Guide](DEVELOPER_GUIDE.md) | Contributing and development setup |
 | [Changelog](CHANGELOG.md) | Version history and release notes |
-| [API Reference](docs/API.md) | Core module and function documentation |
+| [Contributing](CONTRIBUTING.md) | Coding standards and contribution workflow |
 
 ---
 
@@ -182,28 +181,40 @@ python desktop_suite_app.py
 
 ```
 ca_office_suite/
-├── desktop_suite_app.py          # Main application entry point
+├── desktop_suite_app.py          # Desktop entry point (PyQt5)
 │
-├── core/                          # Shared business logic
-│   ├── excel_utils.py            # File I/O utilities
-│   └── excel_writer.py           # Excel writing & formatting
+├── core/                          # Shared business logic (desktop + web)
+│   ├── excel_utils.py            # File I/O utilities, name sanitising
+│   ├── excel_writer.py           # Excel writing & formatting
+│   ├── transformations.py        # Cleaning rules (trim, numbers, dates, case)
+│   └── merge_logic.py            # Merge/concat rules
 │
 ├── config/                        # Configuration
 │   └── constants.py              # Shared constants
 │
-├── workers/                       # (Planned) Background processing
+├── workers/                       # Background processing (QThread)
 │   ├── base_worker.py
 │   ├── formatter_worker.py
-│   ├── pdf_worker.py
+│   ├── pdf_worker.py             # PDFExtractWorker + PDFWorker
 │   └── merge_worker.py
+│
+├── ui/components/                 # Reusable widgets (progress + log)
 │
 ├── pdf_to_excel_pro_tool.py      # PDF extraction tool
 ├── excel_formatter_tool.py       # Excel cleaning tool
-└── excel_merge_split_tool.py    # Merge/split tool
+├── excel_merge_split_tool.py     # Merge/split tool
+│
+├── flask_app/                     # Web front-end over the same core/
+│   ├── app.py                    # Routes, upload handling
+│   ├── utils.py                  # Bridge: files/streams <-> core
+│   └── blueprints/               # Balance sheet generator
+│
+├── tally_api/                     # Tally XML integration (exploratory)
+└── tests/                         # pytest suite
 ```
 
 **Design Principles:**
-- **Modular Architecture**: Shared utilities in `core/`, tools are independent QWidgets
+- **One core, two front-ends**: the desktop suite and the Flask app call the same `core/` modules, so a fix lands in both
 - **Performance First**: Optimized algorithms for large-scale data processing
 - **User Experience**: Background threading keeps UI responsive during long operations
 - **Code Reusability**: Zero duplication through shared modules
@@ -212,29 +223,26 @@ ca_office_suite/
 
 ## 🤝 Contributing
 
-We welcome contributions! Please see our [Developer Guide](DEVELOPER_GUIDE.md) for details.
+Please see the [Developer Guide](DEVELOPER_GUIDE.md) and [Contributing](CONTRIBUTING.md) for details.
 
 ### Quick Contribution Steps
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+1. Create a feature branch (`git checkout -b feature/amazing-feature`)
+2. Commit your changes (`git commit -m 'Add amazing feature'`)
+3. Open a Pull Request
 
 ### Development Setup
 ```bash
-# Clone your fork
-git clone https://github.com/your-username/ca-office-suite.git
-cd ca-office-suite
-
-# Install dependencies
-pip install -r requirements.txt
+# Install dependencies (including dev tools)
+uv sync
 
 # Run tests
-python -m pytest tests/
+uv run pytest
+
+# Lint
+uv run flake8
 
 # Run the app
-python desktop_suite_app.py
+uv run python desktop_suite_app.py
 ```
 
 ---
@@ -245,30 +253,24 @@ python desktop_suite_app.py
 - **Complex Tables**: PDF tables with merged cells may require manual adjustment
 - **Memory Usage**: Processing 100+ large files simultaneously requires 8GB+ RAM
 - **File Format**: Only supports .xlsx, .xls, .csv (not .xlsm or .xlsb)
-
-See [Issues](https://github.com/your-repo/ca-office-suite/issues) for current bugs and feature requests.
+- **Web split**: splitting is capped by the 16 MB upload limit
 
 ---
 
 ## 🗺️ Roadmap
 
-### Version 2.1 (Q1 2025)
-- [ ] Add background threading to PDF and Merge tools (Phase 4.2)
-- [ ] Remove standalone entry points (Phase 4.3)
-- [ ] Add cancel button to all tools
-- [ ] Implement progress bar improvements
+### Done
+- [x] Background threading in all three desktop tools, with cancel support
+- [x] Shared `core/` package behind both the desktop and web front-ends
+- [x] Flask web front-end
+- [x] Balance Sheet generator (9-page form)
+- [x] pytest suite
 
-### Version 2.2 (Q2 2025)
-- [ ] Database export functionality (MySQL, PostgreSQL)
-- [ ] Advanced filtering and data validation
-- [ ] Custom transformation rules (user-defined)
-- [ ] Multi-language support
-
-### Version 3.0 (Q3 2025)
-- [ ] Web-based version (Flask/Django)
-- [ ] Cloud storage integration (Google Drive, OneDrive)
-- [ ] Collaborative features
-- [ ] API for automation
+### Next
+- [ ] Parse the Tally XML responses in `tally_api/` into DataFrames
+- [ ] Map the Balance Sheet form to a fixed Excel template rather than a key/value dump
+- [ ] Server-side session store for the Balance Sheet (the cookie has a ~4 KB ceiling)
+- [ ] Custom, user-defined transformation rules
 
 ---
 
@@ -316,81 +318,9 @@ SOFTWARE.
 
 ## 📞 Support
 
-- **Documentation**: [Read the Docs](docs/)
-- **Issues**: [GitHub Issues](https://github.com/your-repo/ca-office-suite/issues)
-- **Email**: support@ca-office-suite.com
-- **Community**: [Discord Server](https://discord.gg/ca-suite)
-
----
-
-## 🌟 Star History
-
-If you find this project useful, please consider giving it a star ⭐
-
-[![Star History Chart](https://api.star-history.com/svg?repos=your-repo/ca-office-suite&type=Date)](https://star-history.com/#your-repo/ca-office-suite&Date)
+- **Documentation**: see the table above, starting with the [User Guide](USER_GUIDE.md)
+- **Architecture questions**: [ARCHITECTURE.md](ARCHITECTURE.md)
 
 ---
 
 **Built with ❤️ for Chartered Accountants**
-
-```
-PY __ CA Office Suite
-├─ .flake8
-├─ ARCHITECTURE.md
-├─ CA_Firm_Office_Suite.bat
-├─ CHANGELOG.md
-├─ config
-│  ├─ constants.py
-│  └─ __init__.py
-├─ CONTRIBUTING.md
-├─ core
-│  ├─ excel_utils.py
-│  ├─ excel_writer.py
-│  └─ __init__.py
-├─ desktop_suite_app.py
-├─ DEVELOPER_GUIDE.md
-├─ DOCUMENTATION_INDEX.md
-├─ excel_formatter_tool.py
-├─ excel_merge_split_tool.py
-├─ flask_app
-│  ├─ app.py
-│  ├─ core
-│  │  ├─ excel_utils.py
-│  │  ├─ excel_writer.py
-│  │  ├─ merge_logic.py
-│  │  ├─ transformations.py
-│  │  └─ __init__.py
-│  ├─ Procfile
-│  ├─ requirements.txt
-│  ├─ static
-│  │  └─ style.css
-│  ├─ templates
-│  │  ├─ base.html
-│  │  ├─ formatter.html
-│  │  ├─ index.html
-│  │  ├─ merge.html
-│  │  └─ select_tables.html
-│  └─ utils.py
-├─ LICENSE
-├─ pdf_to_excel_pro_tool.py
-├─ PHASE_4.2_COMPLETION_REPORT.md
-├─ PHASE_4.3_COMPLETION_REPORT.md
-├─ PHASE_4.4_COMPLETION_REPORT.md
-├─ Procfile
-├─ README.md
-├─ requirements-dev.txt
-├─ requirements.txt
-├─ ui
-│  ├─ components
-│  │  ├─ progress_logger.py
-│  │  └─ __init__.py
-│  └─ __init__.py
-├─ USER_GUIDE.md
-└─ workers
-   ├─ base_worker.py
-   ├─ formatter_worker.py
-   ├─ merge_worker.py
-   ├─ pdf_worker.py
-   └─ __init__.py
-
-```

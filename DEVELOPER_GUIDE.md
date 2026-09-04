@@ -23,25 +23,17 @@ This guide is for developers who want to contribute to the CA Office Suite proje
 ## Development Environment Setup
 
 ### Prerequisites
-- **Python**: 3.8 or higher
+- **Python**: 3.10 or higher (uv installs it for you)
 - **Git**: For version control
 - **IDE**: VS Code, PyCharm, or similar (VS Code recommended)
 - **OS**: Windows, macOS, or Linux
 
-### Step 1: Clone the Repository
-```bash
-git clone https://github.com/your-repo/ca-office-suite.git
-cd ca-office-suite
-```
-
-### Step 2: Create Virtual Environment
-We recommend using [uv](https://github.com/astral-sh/uv) for fast package management.
+### Step 1: Create Virtual Environment
+This project uses [uv](https://docs.astral.sh/uv/) for environment management.
+uv downloads its own Python, so no system Python install is required.
 
 ```bash
-# Install uv (if not installed)
-pip install uv
-
-# Create virtual environment
+# Create virtual environment (Python 3.10)
 uv venv
 
 # Activate virtual environment
@@ -52,17 +44,16 @@ uv venv
 source .venv/bin/activate
 ```
 
-### Step 3: Install Dependencies
+### Step 2: Install Dependencies
 ```bash
-uv pip install -r requirements.txt
+uv sync
 ```
 
-### Step 4: Install Development Tools
-```bash
-uv pip install -r requirements-dev.txt
-```
+`uv sync` installs both the runtime dependencies and the `dev` dependency
+group from `pyproject.toml`, pinned by `uv.lock`. There is no
+`requirements.txt`; add or remove packages with `uv add` / `uv remove`.
 
-**requirements-dev.txt** includes:
+The dev group in `pyproject.toml` includes:
 ```
 # Testing
 pytest>=7.0.0
@@ -78,13 +69,13 @@ mypy>=0.950
 sphinx>=4.5.0
 ```
 
-### Step 5: Verify Installation
+### Step 3: Verify Installation
 ```bash
 # Run the application
-python desktop_suite_app.py
+uv run python desktop_suite_app.py
 
-# Run tests (when available)
-pytest tests/
+# Run tests
+uv run pytest
 
 # Check code style
 flake8 .
@@ -96,39 +87,44 @@ flake8 .
 
 ```
 ca_office_suite/
-
- desktop_suite_app.py              # Main entry point
-
- core/                              # Shared utilities
-    __init__.py
-    excel_utils.py                # File I/O operations
-    excel_writer.py               # Excel writing/formatting
-
- config/                            # Configuration
-    __init__.py
-    constants.py                  # Application constants
-
- pdf_to_excel_pro_tool.py          # PDF extraction tool
- excel_formatter_tool.py           # Excel cleaning tool
- excel_merge_split_tool.py        # Merge/split tool
-
- docs/                              # Documentation
-    README.md
-    ARCHITECTURE.md
-    USER_GUIDE.md
-    DEVELOPER_GUIDE.md (this file)
-    CHANGELOG.md
-
- tests/                             # Test suite (planned)
-    unit/
-    integration/
-    fixtures/
-
- .flake8                            # Flake8 configuration
- .gitignore                         # Git ignore rules
- requirements.txt                   # Production dependencies
- requirements-dev.txt               # Development dependencies
- setup.py                           # Package setup (planned)
+|
++- desktop_suite_app.py            # Desktop entry point
+|
++- core/                           # Shared logic (desktop + web)
+|  +- excel_utils.py               # File I/O, name sanitising
+|  +- excel_writer.py              # Excel writing/formatting
+|  +- transformations.py           # Cleaning rules
+|  +- merge_logic.py               # Merge/concat rules
+|
++- config/                         # Configuration
+|  +- constants.py                 # Application constants
+|
++- workers/                        # QThread background workers
++- ui/components/                  # Reusable widgets
+|
++- pdf_to_excel_pro_tool.py        # PDF extraction tool
++- excel_formatter_tool.py         # Excel cleaning tool
++- excel_merge_split_tool.py       # Merge/split tool
+|
++- flask_app/                      # Web front-end
+|  +- app.py                       # Routes, upload handling
+|  +- utils.py                     # Bridge to core/
+|  +- blueprints/                  # Balance sheet generator
+|
++- tally_api/                      # Tally XML integration
+|
++- tests/                          # pytest suite
+|  +- conftest.py
+|  +- test_excel_utils.py
+|  +- test_excel_writer.py
+|  +- test_transformations.py
+|  +- test_merge_logic.py
+|  +- test_web_utils.py
+|  +- test_flask_routes.py
+|
++- .flake8                         # Flake8 configuration
++- pyproject.toml                  # Dependencies, pytest config
++- uv.lock                         # Pinned dependency versions
 ```
 
 ---
@@ -280,18 +276,19 @@ git checkout -b feature/feature-name
 4. Export in `__init__.py`
 
 **For new transformation**:
-1. Add function to `excel_formatter_tool.py`
+1. Add function to `core/transformations.py` (shared by desktop and web)
 2. Follow single-pass transformation pattern
 3. Use vectorized pandas operations
 4. Update `apply_all_transformations()` pipeline
+5. Add a test in `tests/test_transformations.py`
 
 #### 4. Test the Feature
 ```bash
 # Manual testing
-python desktop_suite_app.py
+uv run python desktop_suite_app.py
 
-# Automated testing (when available)
-pytest tests/test_new_feature.py
+# Automated testing
+uv run pytest tests/test_new_feature.py
 ```
 
 #### 5. Document the Feature

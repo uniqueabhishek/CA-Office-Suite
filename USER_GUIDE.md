@@ -27,7 +27,7 @@
    ```
 3. **Run the application**:
    ```bash
-   python desktop_suite_app.py
+   uv run python desktop_suite_app.py
    ```
 
 ### Main Window Overview
@@ -219,19 +219,20 @@ Extract tables from PDF documents and save them as formatted Excel workbooks.
 #### Step 1: Select PDF File
 1. Click **"Select PDF"** button
 2. Choose a PDF file containing tables
-3. Wait for table detection (may take 10-30 seconds for large PDFs)
+3. The scan runs in the background: the progress bar and log show which page
+   is being read, and the window stays responsive. Click **"Cancel"** to stop
+   a long scan.
 
 ---
 
 #### Step 2: Preview Detected Tables
-- **Left panel** shows list of detected tables
-- **Format**: `Page X - Table Y (Rows x Cols)`
-- **Example**: `Page 1 - Table 1 (25 rows x 5 cols)`
+Once the scan finishes, each detected table appears as a checkbox followed by
+a text preview of its contents.
 
-**For each table**:
-1. Click on table name in list
-2. **Preview** appears on right showing table contents
-3. Verify the table looks correct
+- **Format**: `Page X - Table Y`
+- **Example**: `Page 1 - Table 1`
+
+Scroll through the previews to verify the tables were read correctly.
 
 ---
 
@@ -250,8 +251,8 @@ Extract tables from PDF documents and save them as formatted Excel workbooks.
 
 #### Step 4: Convert to Excel
 1. Click **"Convert to Excel"**
-2. Choose output location and filename
-3. Wait for conversion
+2. The workbook is written next to the source PDF, using the PDF's name
+3. Export runs in the background with progress in the log
 4. **Success** message appears when done
 
 **Output Format**:
@@ -475,14 +476,12 @@ Combine multiple Excel/CSV files into a single workbook, or split a workbook int
 
 **Solutions**:
 ```bash
-# Check Python version
-python --version  # Should be 3.8+
-
-# Reinstall dependencies
-pip install -r requirements.txt
+# Rebuild the environment (uv manages its own Python 3.10)
+uv venv
+uv sync
 
 # Try running with error output
-python desktop_suite_app.py
+uv run python desktop_suite_app.py
 ```
 
 ---
@@ -584,7 +583,7 @@ Project/
 **Minimum**:
 - 4 GB RAM
 - 2 GB free disk space
-- Python 3.8+
+- Python 3.10+ (installed by uv)
 
 **Recommended for large files**:
 - 8 GB RAM
@@ -602,7 +601,6 @@ Project/
 
 **Support**:
 - GitHub Issues: Report bugs or request features
-- Email: support@ca-office-suite.com
 - Community: Discord server (link in README)
 
 ---

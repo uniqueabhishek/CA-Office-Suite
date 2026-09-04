@@ -7,6 +7,74 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.1.0] - 2026-09-04
+
+### Fixed
+- **Column widths in every generated workbook.** The autofit clamp in
+  `core/excel_writer.py` read `min(max(50, max_len + 2), 100)`, which forced a
+  minimum width of 50 characters on every column of every file the formatter,
+  merge and split tools produced. Widths now track content and are clamped to
+  `MIN_COLUMN_WIDTH`..`MAX_COLUMN_WIDTH` (10..60).
+- **PDF extraction froze the desktop UI.** `pdf_to_excel_pro_tool.py` ran
+  pdfplumber on the GUI thread. It now uses `PDFExtractWorker` to scan and
+  `PDFWorker` to export, both in the background, with a progress bar, log and
+  Cancel button. `workers/pdf_worker.py` had existed unused since Phase 4.2.
+- **Web split silently discarded files.** `split_files_to_zip()` processed only
+  the first upload. It now splits every uploaded workbook, sanitises zip entry
+  names, and de-duplicates colliding names.
+- **Unsanitised sheet names.** Sheet names containing `/ \ * ? : [ ]` produced
+  malformed zip entries and could break the desktop split's output paths. Both
+  paths now go through `core.excel_utils.safe_name()`.
+- `PDFTableExtractor` no longer leaves `pdf_path` and `tables` undefined until
+  the first scan.
+
+### Security
+- **Removed the hardcoded Flask secret key.** `SECRET_KEY` is read from the
+  environment; startup fails when `FLASK_ENV=production` and it is unset, and a
+  development fallback prints a warning.
+- **Uploads are cleaned up.** Temporary uploads are deleted once a request is
+  served, and a retention sweep removes files abandoned mid-flow. Previously
+  the upload folder grew without bound.
+- **Upload validation.** `/formatter` and `/merge` now reject anything that is
+  not `.xlsx`, `.xls` or `.csv` before writing to disk; the merged filename is
+  passed through `secure_filename()`.
+
+### Changed
+- **Single shared `core/` package.** `flask_app/core/excel_utils.py` and
+  `excel_writer.py` were byte-identical copies of the root `core/` versions,
+  and ~210 lines of transformation logic were duplicated between
+  `excel_formatter_tool.py` and `flask_app/core/transformations.py`. The web
+  app's copies were removed; `transformations.py` and `merge_logic.py` moved to
+  `core/`, and both front-ends now import the same modules.
+- `config/constants.py` is now actually used, and carries the column-width,
+  sheet-name and upload settings.
+- The upload folder is anchored to `flask_app/`, not the working directory.
+- `Tally API/` renamed to `tally_api/` so it can be imported: a directory name
+  containing a space cannot be a Python package, its relative import had no
+  package to resolve against, and the smoke script referenced a module
+  (`tally_integration`) that does not exist. `requests` was added to the
+  dependencies it needs.
+- Removed the duplicate `flask_app/Procfile` and `flask_app/requirements.txt`;
+  the root `Procfile` and `pyproject.toml` are authoritative.
+
+### Added
+- **Test suite** (`tests/`, 89 tests) covering the core modules, the Flask
+  bridge helpers and the web routes, with regression tests for the column-width
+  and split-drops-files bugs. `pyproject.toml` configures pytest.
+- `core.excel_utils.safe_name()` for sheet, file and zip-entry names.
+
+### Documentation
+- Repaired mojibake in six markdown files: emoji had been written as invalid
+  byte pairs, `->` arrows and rupee signs as invalid bytes, and the ASCII tree
+  and sequence diagrams had been overwritten with NUL padding. All docs are now
+  valid UTF-8 and the diagrams have been redrawn.
+- Corrected `PHASE_4.2_COMPLETION_REPORT.md`, which described a PDF threading
+  refactor that was never applied to the code.
+- Replaced `pip install -r requirements.txt` instructions with `uv sync`, and
+  removed placeholder GitHub, Discord and support-email links.
+
+---
+
 ## [2.0.0] - 2024-12-06
 
 ### Major Release - Architectural Refactoring & Performance Optimization
@@ -146,49 +214,14 @@ This release represents a complete architectural overhaul with massive performan
 
 ## [Unreleased]
 
-### Planned for 2.1.0 (Q1 2025)
-- **Phase 4.2: Complete Threading Model**
-  - Add background threading to PDF extraction tool
-  - Add background threading to Merge & Split tool
-  - Create `workers/` module with base worker class
-  - Add cancel button functionality to all tools
-  - Consistent progress reporting across all tools
-
-- **Phase 4.3: Architecture Cleanup**
-  - Remove standalone entry points from tool files
-  - Single application entry point (desktop_suite_app.py)
-  - Simplified module dependencies
-
-### Planned for 2.2.0 (Q2 2025)
-- **Database Integration**
-  - Export data to MySQL, PostgreSQL
-  - Import from database tables
-  - SQL query support
-
-- **Advanced Features**
-  - Custom transformation rules (user-defined)
-  - Advanced filtering and validation
-  - Scheduled batch processing
-  - Email notification on completion
-
-- **UI Enhancements**
-  - Dark mode support
-  - Customizable themes
-  - Keyboard shortcuts
-  - Drag-and-drop file selection
-
-### Planned for 3.0.0 (Q3 2025)
-- **Web Application**
-  - Flask/Django web interface
-  - Cloud storage integration (Google Drive, OneDrive)
-  - Collaborative features
-  - REST API for automation
-
-- **Enterprise Features**
-  - Multi-user support with authentication
-  - Audit logging
-  - Role-based access control
-  - Deployment on cloud platforms
+### Next
+- Parse Tally's XML responses in `tally_api/` into DataFrames
+- Map the Balance Sheet form onto a fixed Excel template rather than writing a
+  key/value dump per page
+- Move Balance Sheet state out of the Flask session cookie (~4 KB ceiling) into
+  a server-side store
+- Custom, user-defined transformation rules
+- Dark mode and drag-and-drop file selection in the desktop app
 
 ---
 
@@ -196,6 +229,7 @@ This release represents a complete architectural overhaul with massive performan
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| **2.1.0** | 2026-09-04 | Column-width fix, PDF threading, shared core, web hardening, test suite |
 | **2.0.0** | 2024-12-06 | Architectural refactoring, 10-20x performance boost, comprehensive documentation |
 | **1.1.0** | 2024-11-15 | Merge & Split tool, enhanced formatting options |
 | **1.0.0** | 2024-10-01 | Initial release with PDF extraction and Excel formatting |
@@ -273,9 +307,6 @@ This release represents a complete architectural overhaul with massive performan
 ## Support
 
 - **Documentation**: See [README.md](README.md), [USER_GUIDE.md](USER_GUIDE.md), [ARCHITECTURE.md](ARCHITECTURE.md)
-- **Issues**: Report bugs at [GitHub Issues](https://github.com/your-repo/ca-office-suite/issues)
-- **Discussions**: Join our [Discord Server](https://discord.gg/ca-suite)
-- **Email**: support@ca-office-suite.com
 
 ---
 

@@ -6,6 +6,15 @@
 
 ---
 
+> **Correction (2026-09-04):** the PDF portion of this report did not match the
+> code. `workers/pdf_worker.py` was created, but `pdf_to_excel_pro_tool.py`
+> never imported it — PDF extraction still ran on the GUI thread and froze the
+> window, and the tool had no progress bar or Cancel button. The Formatter and
+> Merge tools were threaded as described. The PDF tool has since been wired up
+> for real: `PDFExtractWorker` scans the PDF in the background and `PDFWorker`
+> writes the workbook, both with progress reporting and cancellation. Treat the
+> PDF sections below as the original intent, not a record of what shipped.
+
 ## Executive Summary
 
 Phase 4.2 has been successfully completed. All three tools (Excel Formatter, PDF Extractor, and Excel Merge/Split) now use background threading for non-blocking UI operations. This architectural improvement ensures:

@@ -26,27 +26,44 @@ This document provides a comprehensive overview of the CA Office Suite's archite
 ### High-Level Architecture
 
 ```
-
-                    Desktop Suite App
-                  (Main QMainWindow)
-,,,
-
-
-        PDF Tool  FormatterMerge Tool
-        (QWidget) (QWidget) (QWidget)
-       ,,,
-
-             <
-                 Core Modules
-
-                 excel_utils.py
-                 excel_writer.py
-                Config Constants
-
+   Desktop front-end                     Web front-end
++---------------------------+     +---------------------------+
+|     DesktopSuiteApp       |     |      Flask app.py         |
+|     (QMainWindow)         |     |      (routes)             |
++-------------+-------------+     +-------------+-------------+
+              |                                 |
+   +----------+----------+          +-----------+-----------+
+   |          |          |          |           |           |
++--v---+ +----v----+ +---v----+  +--v---+ +-----v----+ +----v-----+
+| PDF  | |Formatter| | Merge  |  | PDF  | |Formatter | |  Merge   |
+|Widget| | Widget  | | Widget |  |route | |  route   | |  route   |
++--+---+ +----+----+ +---+----+  +--+---+ +-----+----+ +----+-----+
+   |          |          |          |           |           |
+   |     +----v----+     |          |     +-----v-----+     |
+   |     | workers/|     |          |     |flask_app/ |     |
+   |     |(QThread)|     |          |     | utils.py  |     |
+   |     +----+----+     |          |     +-----+-----+     |
+   |          |          |          |           |           |
+   +----------+----------+----------+-----------+-----------+
+                              |
+                +-------------v--------------+
+                |          core/             |
+                |  excel_utils.py            |
+                |  excel_writer.py           |
+                |  transformations.py        |
+                |  merge_logic.py            |
+                +-------------+--------------+
+                              |
+                +-------------v--------------+
+                |    config/constants.py     |
+                +----------------------------+
 ```
 
+Both front-ends call the same `core/` modules, so a fix to a transformation or
+to the Excel writer applies to the desktop app and the web app at once.
+
 ### Architecture Type
-- **Monolithic Desktop Application** with modular components
+- **Two front-ends over a shared core**: PyQt5 desktop suite and a Flask web app
 - **Event-Driven** GUI using PyQt5 signals/slots
 - **Layer Separation**: UI -> Business Logic -> Data Access
 
@@ -85,56 +102,69 @@ This document provides a comprehensive overview of the CA Office Suite's archite
 
 ```
 ca_office_suite/
-
- desktop_suite_app.py              # Main application entry point
-    DesktopSuiteApp (QMainWindow)  # Main window with tabbed interface
-
- core/                              # Shared business logic modules
-    __init__.py
-    excel_utils.py                # File I/O utilities
-       list_excel_files_in_folder()
-       read_file_to_df()
-       read_all_sheets()
-
-    excel_writer.py               # Excel writing & formatting
-        save_df_to_excel()         # Optimized DataFrame -> Excel
-        apply_formatting_to_workbook()  # In-memory formatting
-
- config/                            # Configuration & constants
-    __init__.py
-    constants.py                  # Shared constants
-        SUPPORTED_EXTENSIONS
-        DEFAULT_OUTPUT_FOLDER
-        UI/Processing settings
-
- workers/ (Planned Phase 4.2)      # Background processing threads
-    __init__.py
-    base_worker.py                # Base QThread class
-    formatter_worker.py           # Excel formatting worker
-    pdf_worker.py                 # PDF extraction worker
-    merge_worker.py               # Merge operations worker
-
- pdf_to_excel_pro_tool.py          # PDF extraction tool
-    PDFTableExtractor (QWidget)
-
- excel_formatter_tool.py           # Excel data cleaning tool
-    ExcelCleanerWindow (QWidget)
-    FileProcessorThread (QThread)  # Background processing
-
- excel_merge_split_tool.py        # Excel merge/split tool
-    ExcelMergeSplitWindow (QWidget)
-
- docs/                              # Documentation
-    README.md
-    ARCHITECTURE.md (this file)
-    USER_GUIDE.md
-    DEVELOPER_GUIDE.md
-    CHANGELOG.md
-
- tests/ (Planned)                   # Unit & integration tests
-     test_excel_utils.py
-     test_excel_writer.py
-     test_transformations.py
+|
++- desktop_suite_app.py             # Desktop entry point
+|     DesktopSuiteApp (QMainWindow) # Main window with tabbed interface
+|
++- core/                            # Shared business logic (desktop + web)
+|  +- __init__.py
+|  +- excel_utils.py                # File I/O utilities
+|  |     list_excel_files_in_folder()
+|  |     read_file_to_df()
+|  |     read_all_sheets()
+|  |     safe_name()                # Sanitises sheet/file/zip-entry names
+|  +- excel_writer.py               # Excel writing & formatting
+|  |     save_df_to_excel()         # Optimized DataFrame -> Excel
+|  |     apply_formatting_to_workbook()  # In-memory formatting
+|  +- transformations.py            # Cleaning rules (trim, numbers, dates, case)
+|  |     apply_all_transformations()
+|  +- merge_logic.py                # Merge/concat rules
+|        merge_files_logic()
+|
++- config/                          # Configuration & constants
+|  +- __init__.py
+|  +- constants.py                  # Shared constants
+|        SUPPORTED_EXTENSIONS, DEFAULT_OUTPUT_FOLDER
+|        MIN/MAX_COLUMN_WIDTH, MAX_SHEET_NAME_LENGTH
+|        ALLOWED_UPLOAD_EXTENSIONS, UPLOAD_RETENTION_SECONDS
+|
++- workers/                         # Background processing threads (desktop)
+|  +- __init__.py
+|  +- base_worker.py                # Base QThread class
+|  +- formatter_worker.py           # Excel formatting worker
+|  +- pdf_worker.py                 # PDFExtractWorker + PDFWorker
+|  +- merge_worker.py               # Merge operations worker
+|
++- ui/components/                   # Reusable widgets
+|  +- progress_logger.py            # Progress bar + timestamped log
+|
++- pdf_to_excel_pro_tool.py         # PDF extraction tool
+|     PDFTableExtractor (QWidget)
++- excel_formatter_tool.py          # Excel data cleaning tool
+|     ExcelCleanerWindow (QWidget)
++- excel_merge_split_tool.py        # Excel merge/split tool
+|     ExcelMergeSplitWindow (QWidget)
+|
++- flask_app/                       # Web front-end over the same core/
+|  +- app.py                        # Routes, upload handling, cleanup
+|  +- utils.py                      # Bridge: files/streams <-> core modules
+|  +- blueprints/
+|  |  +- balance_sheet.py           # 9-page balance sheet form
+|  |  +- excel_gen.py               # Balance sheet workbook builder
+|  +- templates/, static/
+|
++- tally_api/                       # Tally XML integration (exploratory)
+|  +- tally_client.py, tally_templates.py
+|
++- tests/                           # pytest suite
+|  +- test_excel_utils.py
+|  +- test_excel_writer.py
+|  +- test_transformations.py
+|  +- test_merge_logic.py
+|  +- test_web_utils.py
+|  +- test_flask_routes.py
+|
++- README.md, ARCHITECTURE.md, USER_GUIDE.md, DEVELOPER_GUIDE.md, CHANGELOG.md
 ```
 
 ---
@@ -162,6 +192,9 @@ def read_file_to_df(path: str) -> pd.DataFrame
 
 def read_all_sheets(path: str) -> dict[str, pd.DataFrame]
     """Reads all sheets from a file into a dictionary."""
+
+def safe_name(name: str) -> str
+    """Replaces characters illegal in sheet names, filenames and zip entries."""
 ```
 
 **Dependencies**: `os`, `pandas`
@@ -237,18 +270,20 @@ MAX_PREVIEW_ROWS = 50
 **Class Hierarchy**:
 ```
 QWidget (PyQt5)
- ExcelCleanerWindow
-     UI Components (file selector, checkboxes, preview table)
-     Data Transformation Functions
-        trim_whitespace()
-        detect_and_convert_numbers()
-        normalize_dates()
-        apply_number_formatting()
-        apply_text_case()
-        apply_all_transformations()  # Optimized pipeline
-
-     FileProcessorThread (QThread)
-         Background processing with progress signals
+ExcelCleanerWindow
+  |
+  +- UI Components (file selector, checkboxes, preview table)
+  |
+  +- Transformations -> core/transformations.py
+  |     trim_whitespace()
+  |     detect_and_convert_numbers()
+  |     normalize_dates()
+  |     apply_number_formatting()
+  |     apply_text_case()
+  |     apply_all_transformations()   # Optimized pipeline
+  |
+  +- FormatterWorker (workers/formatter_worker.py, a QThread)
+        Background processing with progress signals
 ```
 
 **Transformation Pipeline**:
@@ -327,28 +362,27 @@ Multiple Files -> Read all (core.excel_utils)
 ### File Processing Sequence Diagram
 
 ```
-User            UI               Worker Thread        Core Modules        Disk
-
- Select Files
- Click Apply
-               Create Worker
-               Start Thread
-                                    Read File
-                                                        Open File
-                                                        File Data
-                                    DataFrame
-
-                                    Transform Data
-                                      (apply_all_transformations)
-                                    Processed DF
-
-                                    Write Excel
-                                                        Save File
-               Progress Signal
- Update UI
-
-               Finished Signal
- Show Dialog
+User            UI            Worker Thread      Core Modules        Disk
+ |              |                   |                  |               |
+ |-Select Files>|                   |                  |               |
+ |-Click Apply-># Create Worker     |                  |               |
+ |              |--Start Thread---->|                  |               |
+ |              |                   |--Read File------>|               |
+ |              |                   |                  |--Open File--->|
+ |              |                   |                  |<--File Data---|
+ |              |                   |<--DataFrame------|               |
+ |              |                   |                  |               |
+ |              |                   |--Transform Data->|               |
+ |              |                   |  (apply_all_transformations)     |
+ |              |                   |<--Processed DF---|               |
+ |              |                   |                  |               |
+ |              |                   |--Write Excel---->|               |
+ |              |                   |                  |--Save File--->|
+ |              |<-Progress Signal--|                  |               |
+ |<-Update UI---|                   |                  |               |
+ |              |                   |                  |               |
+ |              |<-Finished Signal--|                  |               |
+ |<-Show Dialog-|                   |                  |               |
 ```
 
 ---
@@ -385,37 +419,40 @@ User            UI               Worker Thread        Core Modules        Disk
 
 ## Threading Model
 
-### Excel Formatter Threading (Implemented)
+All three desktop tools run their work on a `BaseWorker` (QThread) subclass:
+`FormatterWorker`, `MergeWorker`, and `PDFExtractWorker` / `PDFWorker`.
 
 ```
-Main Thread                Worker Thread
-
-    Create FileProcessorThread
-
-    Connect Signals
-       progress_update
-       finished
-
-    Start Thread
-      (UI remains responsive)  Process Files
-                                  Read
-                                  Transform
-                                  Write
-
-    progress_update
-      (Update progress bar)
-
-    finished
-      (Show completion dialog)
+Main Thread                          Worker Thread
+     |                                     |
+     |-- Create FormatterWorker            |
+     |                                     |
+     |-- Connect Signals                   |
+     |     progress_update ----------------|
+     |     finished -----------------------|
+     |                                     |
+     |-- Start Thread -------------------->|
+     |     (UI remains responsive)         |-- Process Files
+     |                                     |     Read
+     |                                     |     Transform
+     |                                     |     Write
+     |                                     |
+     |<-- progress_update -----------------|
+     |     (Update progress bar)           |
+     |                                     |
+     |<-- finished ------------------------|
+     |     (Show completion dialog)        |
 ```
 
 ### Signal/Slot Architecture
 
 ```python
-class FileProcessorThread(QThread):
+class BaseWorker(QThread):
     progress_update = pyqtSignal(int, str)  # (progress_value, message)
     finished = pyqtSignal(bool, str)  # (success, final_message)
 
+
+class FormatterWorker(BaseWorker):
     def run(self):
         for idx, file in enumerate(self.files):
             # Process file...
@@ -485,7 +522,7 @@ elif case_option == "title":
 | **Excel I/O** | openpyxl | 3.0+ | Excel file manipulation |
 | **PDF Parsing** | pdfplumber | 0.7+ | PDF table extraction |
 | **Legacy Excel** | xlrd | 2.0+ | Old .xls file support |
-| **Language** | Python | 3.8+ | Application runtime |
+| **Language** | Python | 3.10+ | Application runtime |
 
 ### Library Justifications
 
@@ -520,68 +557,43 @@ elif case_option == "title":
 
 ## Future Architecture
 
-### Phase 4.2: Complete Threading Model
+### Completed since 2.0.0
 
-**Planned Changes**:
-```
-workers/
- base_worker.py         # Base QThread with common signals
- formatter_worker.py    # Move FileProcessorThread here
- pdf_worker.py          # NEW: PDF extraction in background
- merge_worker.py        # NEW: Merge operations in background
-```
+- `workers/` package: every desktop tool runs on a `BaseWorker` (QThread)
+  subclass with progress reporting and cancellation.
+- `core/transformations.py` and `core/merge_logic.py`: the cleaning and merge
+  rules were lifted out of the tool modules so the Flask app shares them.
+- `flask_app/`: a web front-end over the same `core/` package.
+- `tests/`: a pytest suite covering the core modules and the web routes.
 
-**Benefits**:
-- Consistent UX across all tools
-- All tools become non-blocking
-- Cancel button functionality for all operations
-- Reusable base worker class
+### Still open
 
-### Phase 4.3: Single Entry Point
-
-**Remove standalone `main()` blocks** from tool files:
-- Tools become pure QWidget classes
-- Only `desktop_suite_app.py` has application entry point
-- Simpler dependency management
-- Easier testing
-
-### Phase 4.4: UI Components Library
-
-**Planned Structure**:
-```
-ui/components/
- file_selector.py       # Reusable file selection widget
- progress_logger.py     # Reusable progress bar + log
-```
-
-**Benefits**:
-- Further reduce code duplication
-- Consistent UI patterns
-- Easier to update UI globally
+- Parse Tally's XML responses in `tally_api/` into DataFrames.
+- Map the Balance Sheet form onto a fixed Excel template instead of writing a
+  key/value dump per page.
+- Move the Balance Sheet's multi-page state out of the Flask session cookie,
+  which has a ~4 KB ceiling, into a server-side store.
 
 ---
 
-## Testing Architecture (Planned)
+## Testing Architecture
 
 ### Test Structure
+
 ```
 tests/
- unit/
-    test_excel_utils.py
-    test_excel_writer.py
-    test_transformations.py
-    test_workers.py
-
- integration/
-    test_formatter_workflow.py
-    test_pdf_workflow.py
-    test_merge_workflow.py
-
- fixtures/
-     sample_data.xlsx
-     sample_pdf.pdf
-     expected_outputs/
+ |
+ +- conftest.py                  # sys.path setup + shared fixtures
+ +- test_excel_utils.py          # File discovery, reading, name sanitising
+ +- test_excel_writer.py         # Column widths, styling, number formats
+ +- test_transformations.py      # Cleaning rules, combined pipeline
+ +- test_merge_logic.py          # Concat vs per-sheet merge behaviour
+ +- test_web_utils.py            # Flask bridge: split, merge, format
+ +- test_flask_routes.py         # Upload validation, cleanup, balance sheet
 ```
+
+Run them with `uv run pytest`. `pyproject.toml` sets `testpaths = ["tests"]`,
+so a bare `pytest` picks up the suite and nothing else.
 
 ### Test Coverage Goals
 - **Unit Tests**: 80%+ coverage for core modules
@@ -615,12 +627,15 @@ tests/
 ### Current: Local Installation
 ```
 User Machine
- Python Runtime (3.8+)
-     Virtual Environment
-         PyQt5
-         pandas
-         openpyxl
-         pdfplumber
+ |
+ +- uv-managed Python 3.10
+      |
+      +- .venv/
+           PyQt5
+           pandas
+           openpyxl
+           pdfplumber
+           Flask
 ```
 
 ### Future: Standalone Executable

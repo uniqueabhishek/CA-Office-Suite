@@ -45,7 +45,6 @@ We are committed to providing a welcoming and inspiring community for all. Pleas
 ### Reporting Bugs
 
 **Before submitting a bug report**:
-1. Check the [existing issues](https://github.com/your-repo/ca-office-suite/issues)
 2. Try the latest version to see if the issue is fixed
 3. Collect information about the bug
 
@@ -136,11 +135,8 @@ source venv/bin/activate
 ### 3. Install Dependencies
 
 ```bash
-# Production dependencies
-pip install -r requirements.txt
-
-# Development dependencies
-pip install -r requirements-dev.txt
+# Installs runtime and dev dependencies from pyproject.toml, pinned by uv.lock
+uv sync
 ```
 
 ### 4. Create Feature Branch
@@ -579,10 +575,7 @@ When adding user-facing features:
 ## Getting Help
 
 **Questions?**
-- Check [existing issues](https://github.com/your-repo/ca-office-suite/issues)
-- Join our [Discord server](https://discord.gg/ca-suite)
 - Read the [Developer Guide](DEVELOPER_GUIDE.md)
-- Email: dev@ca-office-suite.com
 
 **First time contributing?**
 - Look for issues labeled `good-first-issue`
