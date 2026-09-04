@@ -16,7 +16,7 @@ from openpyxl import load_workbook
 
 from config.constants import MAX_SHEET_NAME_LENGTH
 from core.excel_utils import read_all_sheets, safe_name
-from core.excel_writer import apply_formatting_to_workbook
+from core.excel_writer import apply_formatting_to_worksheet
 from core.merge_logic import merge_files_logic
 from core.transformations import apply_all_transformations
 
@@ -40,28 +40,28 @@ def process_excel_file(filepath, original_filename, options):
         df_proc, _conversions, nf_map = apply_all_transformations(df, options)
         processed_sheets[sheet_name] = (df_proc, nf_map)
 
-    with pd.ExcelWriter(output, engine='openpyxl') as writer:
+    with pd.ExcelWriter(output, engine="openpyxl") as writer:
         for sheet_name, (df_proc, _) in processed_sheets.items():
             df_proc.to_excel(writer, sheet_name=sheet_name[:MAX_SHEET_NAME_LENGTH], index=False)
 
     # Rewind to read for openpyxl formatting
     output.seek(0)
 
-    # Calculate merged number format map
-    merged_nf = {}
-    for _, (_, nf_map) in processed_sheets.items():
-        if nf_map:
-            merged_nf.update(nf_map)
-
     # Apply Formatting using core writer logic
     wb = load_workbook(output)
 
-    apply_formatting_to_workbook(
-        wb,
-        number_format_map=merged_nf,
-        apply_theme=options.get('apply_theme', False),
-        apply_autofit=options.get('apply_autofit', False)
-    )
+    # Number formats are keyed by column name, so each worksheet is formatted
+    # with its own map. Merging the maps would stamp one sheet's formats onto
+    # any other sheet that happens to share a header name.
+    nf_by_title = {name[:MAX_SHEET_NAME_LENGTH]: nf_map for name, (_, nf_map) in processed_sheets.items()}
+
+    for ws in wb.worksheets:
+        apply_formatting_to_worksheet(
+            ws,
+            number_format_map=nf_by_title.get(ws.title),
+            apply_theme=options.get("apply_theme", False),
+            apply_autofit=options.get("apply_autofit", False),
+        )
 
     # Save final
     final_output = io.BytesIO()
@@ -79,16 +79,14 @@ def merge_files(file_paths):
     merge_files_logic writes to a path, so the result is staged in a temp file
     and read back into memory for the response.
     """
-    temp_output_path = os.path.join(
-        os.path.dirname(file_paths[0]), f"merged_temp_{uuid.uuid4()}.xlsx"
-    )
+    temp_output_path = os.path.join(os.path.dirname(file_paths[0]), f"merged_temp_{uuid.uuid4()}.xlsx")
 
     try:
         # Call the shared logic directly
         merge_files_logic(file_paths, temp_output_path)
 
         # Read back into memory
-        with open(temp_output_path, 'rb') as f:
+        with open(temp_output_path, "rb") as f:
             data = f.read()
 
         return io.BytesIO(data)
@@ -158,29 +156,27 @@ def extract_tables_from_pdf(pdf_path):
                             new_headers.append(col)
                     df = pd.DataFrame(table[1:], columns=new_headers)
 
-                    tables.append({
-                        'page': i + 1,
-                        'id': j + 1,
-                        'html': df.to_html(classes='table table-striped', index=False),
-                        'data': df.to_json(orient='split')
-                    })
+                    tables.append(
+                        {
+                            "page": i + 1,
+                            "id": j + 1,
+                            "html": df.to_html(classes="table table-striped", index=False),
+                            "data": df.to_json(orient="split"),
+                        }
+                    )
     return tables
 
 
 def convert_selected_tables_to_excel(pdf_path, selected_indices):
     """Write the tables identified by 'page-table' ids into one workbook."""
     output = io.BytesIO()
-    with pd.ExcelWriter(output, engine='openpyxl') as writer:
+    with pd.ExcelWriter(output, engine="openpyxl") as writer:
         with pdfplumber.open(pdf_path) as pdf:
             for i, page in enumerate(pdf.pages):
                 page_tables = page.extract_tables()
                 for j, table in enumerate(page_tables):
                     if f"{i+1}-{j+1}" in selected_indices and table:
-                        df = (
-                            pd.DataFrame(table[1:], columns=table[0])
-                            if len(table) > 1
-                            else pd.DataFrame(table)
-                        )
+                        df = pd.DataFrame(table[1:], columns=table[0]) if len(table) > 1 else pd.DataFrame(table)
                         df.to_excel(writer, sheet_name=f"Page{i+1}_Table{j+1}", index=False)
     output.seek(0)
     return output
