@@ -5,14 +5,18 @@ Extracted from excel_merge_split_tool.py so both front-ends produce
 identical output from the same code path.
 """
 
+import logging
 import os
+
 import pandas as pd
 from openpyxl import Workbook, load_workbook
 from openpyxl.utils.dataframe import dataframe_to_rows
 
 from config.constants import MAX_SHEET_NAME_LENGTH
 from core.excel_utils import read_all_sheets
-from core.excel_writer import save_df_to_excel, apply_formatting_to_workbook
+from core.excel_writer import apply_formatting_to_workbook, save_df_to_excel
+
+logger = logging.getLogger(__name__)
 
 
 def merge_files_logic(files, merged_path):
@@ -46,16 +50,22 @@ def merge_files_logic(files, merged_path):
             dfs.append((f, df))
             colsets.append(tuple(df.columns))
             sheetmaps[f] = sheets
-        except Exception as e:  # pylint: disable=broad-except
+        except Exception:  # pylint: disable=broad-except
             # A single unreadable file should not abort the whole merge
-            print(f"Skipping {f} during merge: {e}")
+            logger.warning("Skipping %s during merge: unreadable", f, exc_info=True)
+
+    if not dfs:
+        # Every input failed to read. Falling through would build a workbook
+        # with no sheets, which openpyxl refuses to save with an error that
+        # says nothing about the real cause.
+        raise ValueError("None of the selected files could be read, so there is nothing to merge.")
 
     # Decision Phase: Concatenate or Separate Sheets?
     # if all column sets identical, concat
-    if len(colsets) >= 1 and all(cs == colsets[0] for cs in colsets):
+    if all(cs == colsets[0] for cs in colsets):
         merged_df = pd.concat([df for _, df in dfs], ignore_index=True)
         # Using save_df_to_excel from core, which handles writer logic
-        save_df_to_excel(merged_df, merged_path, sheet_name='Merged')
+        save_df_to_excel(merged_df, merged_path, sheet_name="Merged")
     else:
         # create workbook with each file as sheet
         wb = Workbook()
