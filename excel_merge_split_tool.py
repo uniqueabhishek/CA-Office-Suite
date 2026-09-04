@@ -1,3 +1,10 @@
+"""
+Excel Merge & Split tab of the desktop suite.
+
+Merging is delegated to core/merge_logic.py, which the web app uses too;
+splitting writes one workbook per sheet through core/excel_writer.py.
+"""
+
 import os
 
 from PyQt5 import QtWidgets
@@ -24,6 +31,13 @@ from workers.merge_worker import MergeWorker
 
 # ---------- GUI ----------
 class ExcelMergeSplitWindow(QWidget):
+    """
+    Merge & Split window: file list, output folder, and the run controls.
+
+    A Qt form keeps one attribute per control, so the instance-attribute count
+    tracks how many widgets the layout has rather than any real complexity.
+    """
+
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Excel Merge/Split Tool")
@@ -37,6 +51,7 @@ class ExcelMergeSplitWindow(QWidget):
         self._build_ui()
 
     def _build_ui(self):
+        """Construct and lay out every widget in the window."""
         # main = QWidget()
         main_layout = QVBoxLayout()
         self.setLayout(main_layout)
@@ -128,6 +143,7 @@ class ExcelMergeSplitWindow(QWidget):
 
     # ---------- UI Actions ----------
     def add_files(self):
+        """Add files chosen from a dialog to the selection list."""
         files, _ = QFileDialog.getOpenFileNames(
             self, "Select Excel/CSV files", "", "Spreadsheet files (*.xlsx *.xls *.csv)"
         )
@@ -139,6 +155,7 @@ class ExcelMergeSplitWindow(QWidget):
             self.progress_logger.log(f"Added {len(files)} files.")
 
     def add_folder(self):
+        """Add every supported file found under a chosen folder."""
         folder = QFileDialog.getExistingDirectory(self, "Select folder containing Excel/CSV files", "")
         if folder:
             files = list_excel_files_in_folder(folder)
@@ -151,11 +168,13 @@ class ExcelMergeSplitWindow(QWidget):
             self.progress_logger.log(f"Added {added} files from folder {folder}.")
 
     def clear_files(self):
+        """Empty the selection list."""
         self.selected_files = []
         self.file_list_widget.clear()
         self.progress_logger.log("Cleared file list.")
 
     def select_output_folder(self):
+        """Choose where merged or split output is written."""
         folder = QFileDialog.getExistingDirectory(self, "Select output folder", "")
         if folder:
             self.output_folder = folder
@@ -163,6 +182,7 @@ class ExcelMergeSplitWindow(QWidget):
             self.progress_logger.log(f"Output folder set: {folder}")
 
     def start_processing(self):
+        """Validate the form and run the selected merge or split operation."""
         if not self.file_list_widget.count():
             QMessageBox.warning(self, "No files", "No files selected.")
             return

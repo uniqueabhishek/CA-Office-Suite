@@ -7,6 +7,7 @@ from tally_api.tally_client import TallyClient
 
 
 def main():
+    """Print a sample of the companies and trial balance Tally returns."""
     # Allow user to pass host/port via args, else default
     host = "localhost"
     port = 9000

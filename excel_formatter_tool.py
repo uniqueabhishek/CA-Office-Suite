@@ -1,3 +1,11 @@
+"""
+Excel Formatter tab of the desktop suite.
+
+Builds the Qt form for the cleaning options and hands batches to
+FormatterWorker. The transformations themselves live in core/transformations.py
+so this tool and the web formatter apply identical rules.
+"""
+
 import os
 
 import pandas as pd
@@ -43,6 +51,13 @@ from workers.formatter_worker import FormatterWorker
 
 # ---------- GUI ----------
 class ExcelCleanerWindow(QWidget):
+    """
+    Excel Formatter window: file list, cleaning options, preview and batch run.
+
+    A Qt form keeps one attribute per control, so the instance-attribute count
+    tracks how many widgets the layout has rather than any real complexity.
+    """
+
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Excel Formatter")
@@ -55,6 +70,7 @@ class ExcelCleanerWindow(QWidget):
         self._build_ui()
 
     def _build_ui(self):
+        """Construct and lay out every widget in the window."""
         # main = QWidget()
         main_layout = QHBoxLayout()
         self.setLayout(main_layout)
@@ -225,6 +241,7 @@ class ExcelCleanerWindow(QWidget):
 
     # ---------- UI Actions ----------
     def add_files(self):
+        """Add files chosen from a dialog to the selection list."""
         files, _ = QFileDialog.getOpenFileNames(
             self, "Select Excel/CSV files", "", "Spreadsheet files (*.xlsx *.xls *.csv)"
         )
@@ -236,6 +253,7 @@ class ExcelCleanerWindow(QWidget):
             self.progress_logger.log(f"Added {len(files)} files.")
 
     def add_folder(self):
+        """Add every supported file found under a chosen folder."""
         folder = QFileDialog.getExistingDirectory(self, "Select folder containing Excel/CSV files", "")
         if folder:
             files = list_excel_files_in_folder(folder)
@@ -248,11 +266,13 @@ class ExcelCleanerWindow(QWidget):
             self.progress_logger.log(f"Added {added} files from folder {folder}.")
 
     def clear_files(self):
+        """Empty the selection list."""
         self.selected_files = []
         self.file_list_widget.clear()
         self.progress_logger.log("Cleared file list.")
 
     def select_output_folder(self):
+        """Choose where processed files are written instead of overwriting."""
         folder = QFileDialog.getExistingDirectory(self, "Select output folder", "")
         if folder:
             self.output_folder = folder
@@ -260,7 +280,7 @@ class ExcelCleanerWindow(QWidget):
             self.progress_logger.log(f"Output folder set: {folder}")
 
     def preview_selected(self):
-        # Show preview for currently selected file in list widget
+        """Show the highlighted file with the checked fixes applied, unsaved."""
         item = self.file_list_widget.currentItem()
         if not item:
             QMessageBox.warning(
@@ -314,6 +334,7 @@ class ExcelCleanerWindow(QWidget):
         self.preview_label.setText(f"Preview: {os.path.basename(path)} (first {MAX_PREVIEW_ROWS} rows)")
 
     def show_dataframe_in_table(self, df):
+        """Render a DataFrame into the preview table widget."""
         self.table.clear()
         rows, cols = df.shape
         self.table.setColumnCount(cols)

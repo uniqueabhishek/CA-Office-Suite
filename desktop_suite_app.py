@@ -1,3 +1,10 @@
+"""
+Entry point for the CA Office Suite desktop application.
+
+Hosts each tool - PDF to Excel, the Excel formatter, and merge/split - as a tab
+in a single window so they share one process and one style sheet.
+"""
+
 import sys
 
 from PyQt5.QtCore import Qt
@@ -226,6 +233,8 @@ QProgressBar::chunk {
 
 
 class DesktopSuiteApp(QMainWindow):
+    """Main window hosting each tool of the suite as a tab."""
+
     def __init__(self):
         super().__init__()
         self.setWindowTitle("CA Firm Office Suite - Desktop")
@@ -252,6 +261,7 @@ class DesktopSuiteApp(QMainWindow):
         self.move(frame_geometry.topLeft())
 
     def setup_ui(self):
+        """Build the tab bar and mount one tool widget per tab."""
         # Main Layout
         main_widget = QWidget()
         self.setCentralWidget(main_widget)

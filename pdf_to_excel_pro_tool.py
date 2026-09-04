@@ -1,3 +1,11 @@
+"""
+PDF to Excel tab of the desktop suite.
+
+Scans a PDF for tables, previews what it found, and exports the checked ones to
+a workbook. Both the scan and the export run on PDFExtractWorker/PDFWorker so
+the UI stays responsive on large documents.
+"""
+
 import os
 
 from PyQt5.QtCore import Qt
@@ -20,6 +28,13 @@ from workers.pdf_worker import PDFExtractWorker, PDFWorker
 
 
 class PDFTableExtractor(QWidget):
+    """
+    PDF to Excel window: file picker, per-table previews and the export run.
+
+    A Qt form keeps one attribute per control, so the instance-attribute count
+    tracks how many widgets the layout has rather than any real complexity.
+    """
+
     def __init__(self):
         super().__init__()
         self.setWindowTitle("PDF to Excel PRO Tool")
@@ -30,6 +45,7 @@ class PDFTableExtractor(QWidget):
         self.setup_ui()
 
     def setup_ui(self):
+        """Construct and lay out every widget in the window."""
         main_layout = QVBoxLayout(self)
 
         # Top section with label and buttons
@@ -77,6 +93,7 @@ class PDFTableExtractor(QWidget):
         main_layout.addWidget(self.progress_logger)
 
     def select_pdf(self):
+        """Choose a PDF and start scanning it for tables."""
         file_path, _ = QFileDialog.getOpenFileName(self, "Open PDF", "", "PDF Files (*.pdf)")
         if file_path:
             self.pdf_path = file_path
@@ -135,6 +152,7 @@ class PDFTableExtractor(QWidget):
             QMessageBox.information(self, "No Tables", message)
 
     def clear_preview(self):
+        """Remove the checkboxes and table previews from the previous scan."""
         for i in reversed(range(self.scroll_layout.count())):
             item = self.scroll_layout.itemAt(i)
             if item is not None:
