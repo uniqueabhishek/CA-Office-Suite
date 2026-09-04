@@ -5,6 +5,10 @@ The split tests are regression tests: split_files_to_zip previously processed
 only file_paths[0] and silently discarded every other upload.
 """
 
+# A test names its fixtures as arguments, which shadows the fixture functions
+# at module scope. That is how pytest injects them, not an accident.
+# pylint: disable=redefined-outer-name
+
 import io
 import os
 import zipfile
@@ -78,14 +82,14 @@ class TestSplitFilesToZip:
 
 
 class TestMergeFiles:
-    def test_returns_a_workbook_stream(self, two_workbooks, tmp_path):
+    def test_returns_a_workbook_stream(self, two_workbooks):
         paths, _ = two_workbooks
         stream = utils.merge_files(paths)
 
         ws = load_workbook(stream).active
         assert ws.max_row >= 2
 
-    def test_temp_file_is_cleaned_up(self, two_workbooks, tmp_path):
+    def test_temp_file_is_cleaned_up(self, two_workbooks):
         paths, _ = two_workbooks
         before = set(os.listdir(os.path.dirname(paths[0])))
         utils.merge_files(paths)

@@ -2,6 +2,10 @@
 Tests for core.merge_logic - the merge behaviour shared by both front-ends.
 """
 
+# A test names its fixtures as arguments, which shadows the fixture functions
+# at module scope. That is how pytest injects them, not an accident.
+# pylint: disable=redefined-outer-name
+
 import os
 
 import pandas as pd

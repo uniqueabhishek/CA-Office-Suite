@@ -3,6 +3,10 @@ Tests for the Flask routes: upload validation, temp-file cleanup and the
 balance sheet flow.
 """
 
+# A test names its fixtures as arguments, which shadows the fixture functions
+# at module scope. That is how pytest injects them, not an accident.
+# pylint: disable=redefined-outer-name
+
 import io
 import os
 import time
@@ -73,7 +77,10 @@ class TestUploadHelpers:
         flask_app_module.discard_upload(p)
         assert not os.path.exists(p)
 
-    def test_sweep_removes_only_stale_files(self, client, upload_folder):
+    def test_sweep_removes_only_stale_files(self, client, upload_folder):  # pylint: disable=unused-argument
+        # 'client' is requested for its side effect, not its value: it repoints
+        # UPLOAD_FOLDER at a temp directory, and fixtures resolve in order, so
+        # dropping it would have this test sweep the real uploads folder.
         stale = os.path.join(upload_folder, "stale.xlsx")
         fresh = os.path.join(upload_folder, "fresh.xlsx")
         for p in (stale, fresh):
