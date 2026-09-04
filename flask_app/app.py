@@ -136,12 +136,16 @@ def index():
             flash("No file part")
             return redirect(request.url)
         file = request.files["file"]
-        if file.filename == "":
+        # A multipart part can arrive with no filename at all, which is None
+        # rather than "" - the old check let that through and then crashed on
+        # .lower(). Normalise once so everything below deals with a str.
+        upload_name = file.filename or ""
+        if not upload_name:
             flash("No selected file")
             return redirect(request.url)
-        if file and file.filename.lower().endswith(".pdf"):
+        if upload_name.lower().endswith(".pdf"):
             sweep_stale_uploads()
-            filename = secure_filename(file.filename)
+            filename = secure_filename(upload_name)
             unique_filename = f"{uuid.uuid4()}_{filename}"
             file_path = os.path.join(app.config["UPLOAD_FOLDER"], unique_filename)
 
@@ -185,7 +189,9 @@ def convert():
     """
     current_pdf = session.get("current_pdf")
     original_filename = session.get("original_filename")
-    if not current_pdf:
+    # Both are written together, but a half-populated cookie would otherwise
+    # reach os.path.splitext(None) below.
+    if not current_pdf or not original_filename:
         flash("Session expired.")
         return redirect(url_for("index"))
     file_path = os.path.join(app.config["UPLOAD_FOLDER"], current_pdf)
@@ -228,16 +234,17 @@ def formatter():
             flash("No file uploaded.")
             return redirect(request.url)
         file = request.files["file"]
-        if file.filename == "":
+        upload_name = file.filename or ""
+        if not upload_name:
             flash("No file selected.")
             return redirect(request.url)
-        if not allowed_spreadsheet(file.filename):
+        if not allowed_spreadsheet(upload_name):
             flash("Invalid file type. Please upload an .xlsx, .xls or .csv file.")
             return redirect(request.url)
 
         # Save temp file
         sweep_stale_uploads()
-        filename = secure_filename(file.filename)
+        filename = secure_filename(upload_name)
         temp_path = os.path.join(app.config["UPLOAD_FOLDER"], f"fmt_{uuid.uuid4()}_{filename}")
         file.save(temp_path)
 
@@ -286,11 +293,14 @@ def merge():
     """
     if request.method == "POST":
         files = request.files.getlist("files")
-        if not files or files[0].filename == "":
+        # A part with no filename gives None, which would end up in `rejected`
+        # and blow up the join below. Normalise before anything reads them.
+        upload_names = [f.filename or "" for f in files]
+        if not files or not upload_names[0]:
             flash("No files selected.")
             return redirect(request.url)
 
-        rejected = [f.filename for f in files if not allowed_spreadsheet(f.filename)]
+        rejected = [name for name in upload_names if not allowed_spreadsheet(name)]
         if rejected:
             flash(f"Unsupported file type: {', '.join(rejected)}. Use .xlsx, .xls or .csv.")
             return redirect(request.url)
@@ -301,8 +311,8 @@ def merge():
         sweep_stale_uploads()
         saved_paths = []
         original_names = []
-        for f in files:
-            fname = secure_filename(f.filename)
+        for f, upload_name in zip(files, upload_names):
+            fname = secure_filename(upload_name)
             path = os.path.join(app.config["UPLOAD_FOLDER"], f"merge_{uuid.uuid4()}_{fname}")
             f.save(path)
             saved_paths.append(path)

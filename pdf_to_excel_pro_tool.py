@@ -88,6 +88,12 @@ class PDFTableExtractor(QWidget):
         """
         Scan the selected PDF in a background thread so the UI stays responsive.
         """
+        # Read the path into a local: self.pdf_path starts as None and the
+        # os.path calls below reject None rather than raising anything useful.
+        pdf_path = self.pdf_path
+        if not pdf_path:
+            return
+
         self.clear_preview()
         self.tables = []
 
@@ -95,9 +101,9 @@ class PDFTableExtractor(QWidget):
         self.cancel_btn.setEnabled(True)
         self.progress_logger.clear()
         self.progress_logger.set_max_progress(100)  # Scan reports percentages
-        self.progress_logger.log(f"Scanning {os.path.basename(self.pdf_path)}...")
+        self.progress_logger.log(f"Scanning {os.path.basename(pdf_path)}...")
 
-        self.worker = PDFExtractWorker(self.pdf_path, self)
+        self.worker = PDFExtractWorker(pdf_path, self)
         self.worker.progress_update.connect(self.on_progress_update)
         self.worker.tables_ready.connect(self.on_tables_ready)
         self.worker.finished.connect(self.on_scan_finished)
@@ -150,8 +156,12 @@ class PDFTableExtractor(QWidget):
             )
             return
 
-        base_name = os.path.splitext(os.path.basename(self.pdf_path))[0]
-        output_path = os.path.join(os.path.dirname(self.pdf_path), base_name + ".xlsx")
+        pdf_path = self.pdf_path
+        if not pdf_path:
+            return
+
+        base_name = os.path.splitext(os.path.basename(pdf_path))[0]
+        output_path = os.path.join(os.path.dirname(pdf_path), base_name + ".xlsx")
 
         self.select_btn.setEnabled(False)
         self.convert_btn.setEnabled(False)
@@ -160,7 +170,7 @@ class PDFTableExtractor(QWidget):
         self.progress_logger.set_max_progress(len(selected_tables))
         self.progress_logger.set_progress(0)
 
-        self.worker = PDFWorker(self.pdf_path, selected_tables, output_path, self)
+        self.worker = PDFWorker(pdf_path, selected_tables, output_path, self)
         self.worker.progress_update.connect(self.on_progress_update)
         self.worker.finished.connect(self.on_export_finished)
         self.worker.start()
