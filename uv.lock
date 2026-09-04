@@ -127,6 +127,7 @@ dependencies = [
     { name = "pyqt5-qt5" },
     { name = "pyqt5-sip" },
     { name = "python-dateutil" },
+    { name = "requests" },
     { name = "werkzeug" },
     { name = "xlrd" },
 ]
@@ -170,6 +171,7 @@ requires-dist = [
     { name = "pyqt5-qt5", specifier = "==5.15.2" },
     { name = "pyqt5-sip", specifier = "==12.17.2" },
     { name = "python-dateutil", specifier = ">=2.8.0,<3.0.0" },
+    { name = "requests", specifier = ">=2.28.0,<3.0.0" },
     { name = "werkzeug", specifier = ">=3.1.5" },
     { name = "xlrd", specifier = ">=2.0.0,<3.0.0" },
 ]
