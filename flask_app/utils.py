@@ -15,7 +15,7 @@ import pdfplumber
 from openpyxl import load_workbook
 
 from config.constants import MAX_SHEET_NAME_LENGTH
-from core.excel_utils import read_all_sheets
+from core.excel_utils import read_all_sheets, safe_name
 from core.excel_writer import apply_formatting_to_workbook
 from core.merge_logic import merge_files_logic
 from core.transformations import apply_all_transformations
@@ -100,26 +100,35 @@ def merge_files(file_paths):
 
 def split_files_to_zip(file_paths, original_names):
     """
-    Splits the FIRST file in the list (web update limit) into sheets and zips them.
-    (Desktop logic uses read_all_sheets + save_df_to_excel loop, which is what we do here too)
+    Split every uploaded workbook into one .xlsx per sheet and return a zip.
+
+    A response can only carry a single file, so each sheet becomes an entry in
+    one archive. Entry names are sanitised and de-duplicated, since sheet names
+    may contain characters that are illegal in a zip path or may collide across
+    two uploads that share a filename.
     """
-    # Only process first file for now to match strict constraint of single response
-    fpath = file_paths[0]
-    fname = original_names[0]
-
-    sheets = read_all_sheets(fpath)
-
     zip_buffer = io.BytesIO()
-    with zipfile.ZipFile(zip_buffer, "a", zipfile.ZIP_DEFLATED, False) as zip_file:
-        base, _ = os.path.splitext(fname)
+    used_names = set()
 
-        for sname, df in sheets.items():
-            # Save sheet to bytes
-            sheet_buffer = io.BytesIO()
-            df.to_excel(sheet_buffer, index=False)
-            sheet_buffer.seek(0)
+    with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zip_file:
+        for fpath, fname in zip(file_paths, original_names):
+            sheets = read_all_sheets(fpath)
+            base = safe_name(os.path.splitext(fname)[0])
 
-            zip_file.writestr(f"{base}_{sname}.xlsx", sheet_buffer.read())
+            for sname, df in sheets.items():
+                # Save sheet to bytes
+                sheet_buffer = io.BytesIO()
+                df.to_excel(sheet_buffer, index=False)
+                sheet_buffer.seek(0)
+
+                entry = f"{base}_{safe_name(sname)}.xlsx"
+                suffix = 1
+                while entry in used_names:
+                    suffix += 1
+                    entry = f"{base}_{safe_name(sname)}_{suffix}.xlsx"
+                used_names.add(entry)
+
+                zip_file.writestr(entry, sheet_buffer.read())
 
     zip_buffer.seek(0)
     return zip_buffer

@@ -14,10 +14,12 @@ from PyQt5.QtWidgets import (
 )
 
 # Import shared utilities from core modules
-from core.excel_utils import list_excel_files_in_folder, read_all_sheets
+from config.constants import MAX_SHEET_NAME_LENGTH
+from core.excel_utils import list_excel_files_in_folder, read_all_sheets, safe_name
 from core.excel_writer import save_df_to_excel
 from workers.merge_worker import MergeWorker
 from ui.components import ProgressLogger
+
 
 # ---------- GUI ----------
 class ExcelMergeSplitWindow(QWidget):
@@ -220,9 +222,14 @@ class ExcelMergeSplitWindow(QWidget):
                     base_name = os.path.splitext(
                         os.path.basename(file_path))[0]
                     for sheetname, df in sheets.items():
-                        out_name = f"{base_name}__{sheetname[:20]}.xlsx"
+                        # Sheet names can contain characters that are illegal in
+                        # a filename, so sanitise before building the path.
+                        safe_sheet = safe_name(sheetname)
+                        out_name = f"{base_name}__{safe_sheet[:20]}.xlsx"
                         out_path = os.path.join(self.output_folder, out_name)
-                        save_df_to_excel(df, out_path, sheet_name=sheetname)
+                        save_df_to_excel(
+                            df, out_path, sheet_name=safe_sheet[:MAX_SHEET_NAME_LENGTH]
+                        )
                         self.progress_logger.log(f"  Saved sheet: {out_path}")
                 except Exception as e:
                     self.progress_logger.log(f"Failed to split {file_path}: {e}")

@@ -6,10 +6,29 @@ to eliminate code duplication and ensure consistency.
 """
 
 import os
+import re
 import pandas as pd
 
 
 SUPPORTED_EXTENSIONS = (".xlsx", ".xls", ".csv")
+
+# Characters Excel rejects in a worksheet name, and which would be read as path
+# separators in a filename or zip entry.
+_UNSAFE_NAME_CHARS = re.compile(r'[\\/*?:\[\]]')
+
+
+def safe_name(name):
+    """
+    Replace characters that are invalid in worksheet names, filenames and zip
+    entries with underscores.
+
+    Args:
+        name (str): Raw name, typically a sheet name taken from a workbook
+
+    Returns:
+        str: A name safe to use in a path, zip entry or worksheet title
+    """
+    return _UNSAFE_NAME_CHARS.sub("_", str(name)).strip() or "Sheet"
 
 
 def list_excel_files_in_folder(folder):
