@@ -462,6 +462,7 @@ ca_office_suite/
 from PyQt5.QtWidgets import QWidget, QVBoxLayout
 from ui.components import ProgressLogger
 
+
 class MyNewTool(QWidget):
     def __init__(self):
         super().__init__()

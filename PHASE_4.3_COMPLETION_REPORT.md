@@ -311,6 +311,7 @@ from excel_formatter_tool import ExcelCleanerWindow
 ```python
 # Importing tool file is safe - no side effects
 from excel_formatter_tool import ExcelCleanerWindow
+
 # Can create QApplication in test as needed
 app = QApplication([])
 widget = ExcelCleanerWindow()
@@ -366,6 +367,7 @@ if __name__ == "__main__":
 
     # Uncomment the tool you want to test:
     from pdf_to_excel_pro_tool import PDFTableExtractor
+
     window = PDFTableExtractor()
 
     # from excel_formatter_tool import ExcelCleanerWindow

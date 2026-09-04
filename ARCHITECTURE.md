@@ -460,6 +460,7 @@ class FormatterWorker(BaseWorker):
 
         self.finished.emit(True, "All files processed")
 
+
 # In main window:
 worker.progress_update.connect(self.on_progress_update)
 worker.finished.connect(self.on_processing_finished)
@@ -685,11 +686,8 @@ import logging
 
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[
-        logging.FileHandler('ca_suite.log'),
-        logging.StreamHandler()
-    ]
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    handlers=[logging.FileHandler("ca_suite.log"), logging.StreamHandler()],
 )
 ```
 
