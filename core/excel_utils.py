@@ -7,14 +7,14 @@ to eliminate code duplication and ensure consistency.
 
 import os
 import re
-import pandas as pd
 
+import pandas as pd
 
 SUPPORTED_EXTENSIONS = (".xlsx", ".xls", ".csv")
 
 # Characters Excel rejects in a worksheet name, and which would be read as path
 # separators in a filename or zip entry.
-_UNSAFE_NAME_CHARS = re.compile(r'[\\/*?:\[\]]')
+_UNSAFE_NAME_CHARS = re.compile(r"[\\/*?:\[\]]")
 
 
 def safe_name(name):
@@ -29,6 +29,23 @@ def safe_name(name):
         str: A name safe to use in a path, zip entry or worksheet title
     """
     return _UNSAFE_NAME_CHARS.sub("_", str(name)).strip() or "Sheet"
+
+
+def _engine_for(ext):
+    """
+    Pick the pandas Excel engine for a file extension.
+
+    Legacy .xls needs xlrd; everything else goes through pandas' default. This
+    replaces a blanket try/except that retried with xlrd on any failure, which
+    hid the real error behind a second, unrelated one.
+
+    Args:
+        ext (str): Lowercased file extension, including the dot
+
+    Returns:
+        str or None: Engine name, or None to let pandas choose
+    """
+    return "xlrd" if ext == ".xls" else None
 
 
 def list_excel_files_in_folder(folder):
@@ -61,19 +78,9 @@ def read_file_to_df(path):
         pandas.DataFrame: DataFrame with all values as strings
     """
     ext = os.path.splitext(path)[1].lower()
-    # read smartly
     if ext == ".csv":
         return pd.read_csv(path, dtype=str, keep_default_na=False)
-    else:
-        # For Excel, read all sheets when needed; for preview read first sheet
-        # Use engine autodetection
-        try:
-            return pd.read_excel(path, sheet_name=0, dtype=str, keep_default_na=False)
-        except Exception:
-            # fallback: try with xlrd engine for old .xls
-            return pd.read_excel(
-                path, sheet_name=0, engine="xlrd", dtype=str, keep_default_na=False
-            )
+    return pd.read_excel(path, sheet_name=0, dtype=str, keep_default_na=False, engine=_engine_for(ext))
 
 
 def read_all_sheets(path):
@@ -89,5 +96,4 @@ def read_all_sheets(path):
     ext = os.path.splitext(path)[1].lower()
     if ext == ".csv":
         return {"Sheet1": pd.read_csv(path, dtype=str, keep_default_na=False)}
-    else:
-        return pd.read_excel(path, sheet_name=None, dtype=str, keep_default_na=False)
+    return pd.read_excel(path, sheet_name=None, dtype=str, keep_default_na=False, engine=_engine_for(ext))
