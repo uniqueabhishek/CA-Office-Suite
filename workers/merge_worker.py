@@ -5,12 +5,14 @@ Handles merging multiple Excel/CSV files in a separate thread to keep UI respons
 """
 
 import os
+
 import pandas as pd
 from openpyxl import Workbook
 from openpyxl.utils.dataframe import dataframe_to_rows
-from workers.base_worker import BaseWorker
+
 from core.excel_utils import read_all_sheets
 from core.excel_writer import save_df_to_excel
+from workers.base_worker import BaseWorker
 
 
 class MergeWorker(BaseWorker):
@@ -106,7 +108,7 @@ class MergeWorker(BaseWorker):
                 self.emit_progress(total_files, total_files, "Columns match - concatenating data...")
 
                 merged_df = pd.concat([df for _, df in dfs], ignore_index=True)
-                save_df_to_excel(merged_df, self.output_path, sheet_name='Merged')
+                save_df_to_excel(merged_df, self.output_path, sheet_name="Merged")
 
                 self.emit_progress(total_files, total_files, f"Created merged sheet with {len(merged_df)} total rows")
 
@@ -131,11 +133,7 @@ class MergeWorker(BaseWorker):
                         sheet_count += 1
                         title = f"{short_name}__{sheetname}"[:31]
 
-                        self.emit_progress(
-                            total_files,
-                            total_files,
-                            f"Creating sheet {sheet_count}: {title}"
-                        )
+                        self.emit_progress(total_files, total_files, f"Creating sheet {sheet_count}: {title}")
 
                         ws = wb.create_sheet(title=title)
 
@@ -154,10 +152,7 @@ class MergeWorker(BaseWorker):
                 # or within the workbook creation above
 
             # Success!
-            self.finished.emit(
-                True,
-                f"Successfully merged {len(dfs)} files into {self.output_path}"
-            )
+            self.finished.emit(True, f"Successfully merged {len(dfs)} files into {self.output_path}")
 
         except Exception as e:
             # Handle any errors

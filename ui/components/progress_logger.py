@@ -6,7 +6,8 @@ that's used across all tools in the CA Firm Office Suite.
 """
 
 from datetime import datetime
-from PyQt5.QtWidgets import QWidget, QVBoxLayout, QProgressBar, QTextEdit, QLabel
+
+from PyQt5.QtWidgets import QLabel, QProgressBar, QTextEdit, QVBoxLayout, QWidget
 
 
 class ProgressLogger(QWidget):

@@ -1,24 +1,25 @@
 import os
+
 from PyQt5 import QtWidgets
 from PyQt5.QtWidgets import (
-    QWidget,
+    QCheckBox,
     QFileDialog,
-    QMessageBox,
-    QVBoxLayout,
+    QGroupBox,
     QHBoxLayout,
     QLabel,
-    QPushButton,
     QListWidget,
-    QCheckBox,
-    QGroupBox,
+    QMessageBox,
+    QPushButton,
+    QVBoxLayout,
+    QWidget,
 )
 
 # Import shared utilities from core modules
 from config.constants import MAX_SHEET_NAME_LENGTH
 from core.excel_utils import list_excel_files_in_folder, read_all_sheets, safe_name
 from core.excel_writer import save_df_to_excel
-from workers.merge_worker import MergeWorker
 from ui.components import ProgressLogger
+from workers.merge_worker import MergeWorker
 
 
 # ---------- GUI ----------
@@ -138,9 +139,7 @@ class ExcelMergeSplitWindow(QWidget):
             self.progress_logger.log(f"Added {len(files)} files.")
 
     def add_folder(self):
-        folder = QFileDialog.getExistingDirectory(
-            self, "Select folder containing Excel/CSV files", ""
-        )
+        folder = QFileDialog.getExistingDirectory(self, "Select folder containing Excel/CSV files", "")
         if folder:
             files = list_excel_files_in_folder(folder)
             added = 0
@@ -157,8 +156,7 @@ class ExcelMergeSplitWindow(QWidget):
         self.progress_logger.log("Cleared file list.")
 
     def select_output_folder(self):
-        folder = QFileDialog.getExistingDirectory(
-            self, "Select output folder", "")
+        folder = QFileDialog.getExistingDirectory(self, "Select output folder", "")
         if folder:
             self.output_folder = folder
             self.out_folder_label.setText(f"Output folder: {folder}")
@@ -170,15 +168,11 @@ class ExcelMergeSplitWindow(QWidget):
             return
 
         if not self.chk_merge.isChecked() and not self.chk_split.isChecked():
-            QMessageBox.warning(
-                self, "No operation",
-                "Please select Merge or Split operation.")
+            QMessageBox.warning(self, "No operation", "Please select Merge or Split operation.")
             return
 
         if not self.output_folder:
-            QMessageBox.warning(
-                self, "No Output Folder",
-                "Please select an output folder.")
+            QMessageBox.warning(self, "No Output Folder", "Please select an output folder.")
             return
 
         files = []
@@ -219,17 +213,14 @@ class ExcelMergeSplitWindow(QWidget):
                 self.progress_logger.log(f"Splitting: {file_path}")
                 try:
                     sheets = read_all_sheets(file_path)
-                    base_name = os.path.splitext(
-                        os.path.basename(file_path))[0]
+                    base_name = os.path.splitext(os.path.basename(file_path))[0]
                     for sheetname, df in sheets.items():
                         # Sheet names can contain characters that are illegal in
                         # a filename, so sanitise before building the path.
                         safe_sheet = safe_name(sheetname)
                         out_name = f"{base_name}__{safe_sheet[:20]}.xlsx"
                         out_path = os.path.join(self.output_folder, out_name)
-                        save_df_to_excel(
-                            df, out_path, sheet_name=safe_sheet[:MAX_SHEET_NAME_LENGTH]
-                        )
+                        save_df_to_excel(df, out_path, sheet_name=safe_sheet[:MAX_SHEET_NAME_LENGTH])
                         self.progress_logger.log(f"  Saved sheet: {out_path}")
                 except Exception as e:
                     self.progress_logger.log(f"Failed to split {file_path}: {e}")

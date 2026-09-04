@@ -1,24 +1,22 @@
 import os
+
 import pandas as pd
 from PyQt5 import QtWidgets
-
-# from PyQt5 import QtGui
-
 from PyQt5.QtWidgets import (
-    QWidget,
-    QFileDialog,
-    QMessageBox,
-    QVBoxLayout,
-    QHBoxLayout,
-    QLabel,
-    QPushButton,
-    QListWidget,
     QCheckBox,
     QComboBox,
+    QFileDialog,
+    QGroupBox,
+    QHBoxLayout,
+    QLabel,
+    QListWidget,
+    QMessageBox,
+    QPushButton,
+    QRadioButton,
     QTableWidget,
     QTableWidgetItem,
-    QRadioButton,
-    QGroupBox,
+    QVBoxLayout,
+    QWidget,
 )
 
 # Import shared utilities from core modules
@@ -32,8 +30,11 @@ from core.transformations import (
     normalize_dates,
     trim_whitespace,
 )
-from workers.formatter_worker import FormatterWorker
 from ui.components import ProgressLogger
+from workers.formatter_worker import FormatterWorker
+
+# from PyQt5 import QtGui
+
 
 # ---------- Core data-cleaning logic ----------
 # The transformations live in core/transformations.py so the desktop app and
@@ -120,24 +121,17 @@ class ExcelCleanerWindow(QWidget):
 
         self.chk_numbers = QCheckBox("Convert numbers stored as text")
         self.chk_trim = QCheckBox("Trim leading/trailing spaces")
-        self.chk_dates = QCheckBox(
-            "Normalize date format (default dd-mm-yyyy)")
+        self.chk_dates = QCheckBox("Normalize date format (default dd-mm-yyyy)")
         self.date_format_combo = QComboBox()
-        self.date_format_combo.addItems(
-            ["dd-mm-yyyy", "yyyy-mm-dd", "mm/dd/yyyy"])
+        self.date_format_combo.addItems(["dd-mm-yyyy", "yyyy-mm-dd", "mm/dd/yyyy"])
         self.chk_number_format = QCheckBox("Apply number format")
         self.num_format_combo = QComboBox()
-        self.num_format_combo.addItems(
-            ["2 decimals (default)", "no decimals", "currency"]
-        )
+        self.num_format_combo.addItems(["2 decimals (default)", "no decimals", "currency"])
         self.currency_input = QtWidgets.QLineEdit()
-        self.currency_input.setPlaceholderText(
-            "Currency symbol (e.g. ₹, $, €). Empty = ₹ default"
-        )
+        self.currency_input.setPlaceholderText("Currency symbol (e.g. ₹, $, €). Empty = ₹ default")
         self.chk_text_case = QCheckBox("Apply text case")
         self.text_case_combo = QComboBox()
-        self.text_case_combo.addItems(
-            ["none", "UPPERCASE", "lowercase", "Title Case"])
+        self.text_case_combo.addItems(["none", "UPPERCASE", "lowercase", "Title Case"])
 
         fix_layout.addWidget(self.chk_numbers)
         fix_layout.addWidget(self.chk_trim)
@@ -219,8 +213,7 @@ class ExcelCleanerWindow(QWidget):
         r_layout = QVBoxLayout()
         right.setLayout(r_layout)
 
-        self.preview_label = QLabel(
-            "Preview: (select a file and click Preview)")
+        self.preview_label = QLabel("Preview: (select a file and click Preview)")
         r_layout.addWidget(self.preview_label)
 
         self.table = QTableWidget()
@@ -243,9 +236,7 @@ class ExcelCleanerWindow(QWidget):
             self.progress_logger.log(f"Added {len(files)} files.")
 
     def add_folder(self):
-        folder = QFileDialog.getExistingDirectory(
-            self, "Select folder containing Excel/CSV files", ""
-        )
+        folder = QFileDialog.getExistingDirectory(self, "Select folder containing Excel/CSV files", "")
         if folder:
             files = list_excel_files_in_folder(folder)
             added = 0
@@ -262,8 +253,7 @@ class ExcelCleanerWindow(QWidget):
         self.progress_logger.log("Cleared file list.")
 
     def select_output_folder(self):
-        folder = QFileDialog.getExistingDirectory(
-            self, "Select output folder", "")
+        folder = QFileDialog.getExistingDirectory(self, "Select output folder", "")
         if folder:
             self.output_folder = folder
             self.out_folder_label.setText(f"Output folder: {folder}")
@@ -283,8 +273,7 @@ class ExcelCleanerWindow(QWidget):
         try:
             df = read_file_to_df(path)
         except Exception as e:
-            QMessageBox.critical(self, "Read Error",
-                                 f"Failed to read {path}\n{e}")
+            QMessageBox.critical(self, "Read Error", f"Failed to read {path}\n{e}")
             return
 
         # Apply the selected fixes to a copy for preview (but do not save)
@@ -296,9 +285,7 @@ class ExcelCleanerWindow(QWidget):
         if self.chk_numbers.isChecked():
             df_preview, conversions = detect_and_convert_numbers(df_preview)
         if self.chk_dates.isChecked():
-            df_preview, conv = normalize_dates(
-                df_preview, target_format=self.date_format_combo.currentText()
-            )
+            df_preview, conv = normalize_dates(df_preview, target_format=self.date_format_combo.currentText())
         if self.chk_text_case.isChecked():
             sel = self.text_case_combo.currentText()
             case_map = {
@@ -312,19 +299,12 @@ class ExcelCleanerWindow(QWidget):
         # number formatting preview won't change actual numbers in preview (we'll show numbers), but we could round
         if self.chk_number_format.isChecked():
             nf_opt = self.num_format_combo.currentText()
-            nf_key = (
-                "2_decimals"
-                if "2" in nf_opt
-                else ("no_decimals" if "no" in nf_opt.lower() else "currency")
-            )
+            nf_key = "2_decimals" if "2" in nf_opt else ("no_decimals" if "no" in nf_opt.lower() else "currency")
             cur_sym = self.currency_input.text().strip() or DEFAULT_CURRENCY_SYMBOL
-            df_preview, nf_map = apply_number_formatting(
-                df_preview, option=nf_key, currency_symbol=cur_sym
-            )
+            df_preview, nf_map = apply_number_formatting(df_preview, option=nf_key, currency_symbol=cur_sym)
 
         self.show_dataframe_in_table(df_preview.head(MAX_PREVIEW_ROWS))
-        self.preview_label.setText(
-            f"Preview: {os.path.basename(path)} (first {MAX_PREVIEW_ROWS} rows)")
+        self.preview_label.setText(f"Preview: {os.path.basename(path)} (first {MAX_PREVIEW_ROWS} rows)")
 
     def show_dataframe_in_table(self, df):
         self.table.clear()
@@ -349,9 +329,7 @@ class ExcelCleanerWindow(QWidget):
         Enables cancel button during processing.
         """
         if not self.file_list_widget.count():
-            QMessageBox.warning(
-                self, "No files", "No files selected. Add files or a folder first."
-            )
+            QMessageBox.warning(self, "No files", "No files selected. Add files or a folder first.")
             return
 
         # Determine output folder
@@ -360,11 +338,8 @@ class ExcelCleanerWindow(QWidget):
                 # default to 'Processed' in current working directory
                 self.output_folder = os.path.join(os.getcwd(), DEFAULT_OUTPUT_FOLDER)
                 os.makedirs(self.output_folder, exist_ok=True)
-                self.out_folder_label.setText(
-                    f"Output folder: {self.output_folder}")
-                self.progress_logger.log(
-                    f"No output folder chosen. Using default: {self.output_folder}"
-                )
+                self.out_folder_label.setText(f"Output folder: {self.output_folder}")
+                self.progress_logger.log(f"No output folder chosen. Using default: {self.output_folder}")
         else:
             # overwrite originals
             self.output_folder = None
@@ -384,11 +359,7 @@ class ExcelCleanerWindow(QWidget):
 
         # Build options dictionary from UI controls
         nf_opt = self.num_format_combo.currentText()
-        nf_key = (
-            "2_decimals"
-            if "2" in nf_opt
-            else ("no_decimals" if "no" in nf_opt.lower() else "currency")
-        )
+        nf_key = "2_decimals" if "2" in nf_opt else ("no_decimals" if "no" in nf_opt.lower() else "currency")
 
         sel = self.text_case_combo.currentText()
         case_map = {
@@ -399,18 +370,18 @@ class ExcelCleanerWindow(QWidget):
         }
 
         options = {
-            'trim': self.chk_trim.isChecked(),
-            'numbers': self.chk_numbers.isChecked(),
-            'dates': self.chk_dates.isChecked(),
-            'date_format': self.date_format_combo.currentText(),
-            'text_case': case_map.get(sel, "none"),
-            'remove_dups': self.chk_remove_dups.isChecked(),
-            'number_format': self.chk_number_format.isChecked(),
-            'number_format_option': nf_key,
-            'currency_symbol': self.currency_input.text().strip() or DEFAULT_CURRENCY_SYMBOL,
-            'apply_autofit': self.chk_autofit.isChecked(),
-            'apply_number_format': self.chk_number_format.isChecked(),
-            'apply_theme': self.chk_theme.isChecked()
+            "trim": self.chk_trim.isChecked(),
+            "numbers": self.chk_numbers.isChecked(),
+            "dates": self.chk_dates.isChecked(),
+            "date_format": self.date_format_combo.currentText(),
+            "text_case": case_map.get(sel, "none"),
+            "remove_dups": self.chk_remove_dups.isChecked(),
+            "number_format": self.chk_number_format.isChecked(),
+            "number_format_option": nf_key,
+            "currency_symbol": self.currency_input.text().strip() or DEFAULT_CURRENCY_SYMBOL,
+            "apply_autofit": self.chk_autofit.isChecked(),
+            "apply_number_format": self.chk_number_format.isChecked(),
+            "apply_theme": self.chk_theme.isChecked(),
         }
 
         # Disable UI during processing

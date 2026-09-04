@@ -11,11 +11,12 @@ class TallyClient:
     """
     Client for interacting with TallyPrime/ERP 9 via XML over HTTP.
     """
+
     def __init__(self, host="localhost", port=9000):
         self.host = host
         self.port = port
         self.base_url = f"http://{host}:{port}"
-        self.headers = {'Content-Type': 'text/xml; charset=utf-8'}
+        self.headers = {"Content-Type": "text/xml; charset=utf-8"}
 
     def _send_request(self, xml_payload):
         """

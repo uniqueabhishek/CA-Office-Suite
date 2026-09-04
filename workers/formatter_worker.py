@@ -7,11 +7,13 @@ This worker was originally FileProcessorThread in excel_formatter_tool.py.
 
 import os
 import traceback
+
 from openpyxl import Workbook
 from openpyxl.utils.dataframe import dataframe_to_rows
-from workers.base_worker import BaseWorker
+
 from core.excel_utils import read_all_sheets
 from core.excel_writer import apply_formatting_to_workbook
+from workers.base_worker import BaseWorker
 
 
 class FormatterWorker(BaseWorker):
@@ -91,8 +93,7 @@ class FormatterWorker(BaseWorker):
                         else:
                             # Create workbook with sheets
                             out_path = os.path.join(
-                                self.output_folder,
-                                base if base.lower().endswith(".xlsx") else name + ".xlsx"
+                                self.output_folder, base if base.lower().endswith(".xlsx") else name + ".xlsx"
                             )
                             wb = Workbook()
                             # Remove default sheet
@@ -107,9 +108,9 @@ class FormatterWorker(BaseWorker):
 
                             # Apply formatting in memory BEFORE saving (50% less I/O)
                             if (
-                                self.options.get('apply_autofit', False)
-                                or self.options.get('apply_number_format', False)
-                                or self.options.get('apply_theme', False)
+                                self.options.get("apply_autofit", False)
+                                or self.options.get("apply_number_format", False)
+                                or self.options.get("apply_theme", False)
                             ):
                                 # Build merged number_format_map across sheets
                                 merged_nf = {}
@@ -120,8 +121,8 @@ class FormatterWorker(BaseWorker):
                                 apply_formatting_to_workbook(
                                     wb,
                                     number_format_map=merged_nf,
-                                    apply_theme=self.options.get('apply_theme', False),
-                                    apply_autofit=self.options.get('apply_autofit', False)
+                                    apply_theme=self.options.get("apply_theme", False),
+                                    apply_autofit=self.options.get("apply_autofit", False),
                                 )
 
                             # Single save operation
@@ -147,9 +148,9 @@ class FormatterWorker(BaseWorker):
 
                             # Apply formatting in memory BEFORE saving
                             if (
-                                self.options.get('apply_autofit', False)
-                                or self.options.get('apply_number_format', False)
-                                or self.options.get('apply_theme', False)
+                                self.options.get("apply_autofit", False)
+                                or self.options.get("apply_number_format", False)
+                                or self.options.get("apply_theme", False)
                             ):
                                 merged_nf = {}
                                 for _, nfmap in processed_sheets.values():
@@ -158,8 +159,8 @@ class FormatterWorker(BaseWorker):
                                 apply_formatting_to_workbook(
                                     wb,
                                     number_format_map=merged_nf,
-                                    apply_theme=self.options.get('apply_theme', False),
-                                    apply_autofit=self.options.get('apply_autofit', False)
+                                    apply_theme=self.options.get("apply_theme", False),
+                                    apply_autofit=self.options.get("apply_autofit", False),
                                 )
 
                             # Single save operation

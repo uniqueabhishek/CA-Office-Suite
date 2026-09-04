@@ -8,6 +8,7 @@ Provides common functionality for all worker threads including:
 """
 
 import traceback
+
 from PyQt5.QtCore import QThread, pyqtSignal
 
 

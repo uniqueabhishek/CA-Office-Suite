@@ -1,18 +1,19 @@
 import os
+
+from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import (
+    QCheckBox,
+    QFileDialog,
+    QFrame,
+    QHBoxLayout,
     QLabel,
+    QMessageBox,
     QPushButton,
+    QScrollArea,
+    QTextEdit,
     QVBoxLayout,
     QWidget,
-    QScrollArea,
-    QHBoxLayout,
-    QFileDialog,
-    QMessageBox,
-    QCheckBox,
-    QTextEdit,
-    QFrame,
 )
-from PyQt5.QtCore import Qt
 
 from ui.components import ProgressLogger
 from workers.pdf_worker import PDFExtractWorker, PDFWorker
@@ -77,9 +78,7 @@ class PDFTableExtractor(QWidget):
         main_layout.addWidget(self.progress_logger)
 
     def select_pdf(self):
-        file_path, _ = QFileDialog.getOpenFileName(
-            self, "Open PDF", "", "PDF Files (*.pdf)"
-        )
+        file_path, _ = QFileDialog.getOpenFileName(self, "Open PDF", "", "PDF Files (*.pdf)")
         if file_path:
             self.pdf_path = file_path
             self.label.setText(f"Selected: {os.path.basename(file_path)}")
@@ -143,10 +142,7 @@ class PDFTableExtractor(QWidget):
         """
         Export the checked tables to Excel in a background thread.
         """
-        selected_tables = [
-            tbl for tbl, chk in zip(self.tables, self.checkboxes)
-            if chk.isChecked()
-        ]
+        selected_tables = [tbl for tbl, chk in zip(self.tables, self.checkboxes) if chk.isChecked()]
         if not selected_tables:
             QMessageBox.information(
                 self,
@@ -156,9 +152,7 @@ class PDFTableExtractor(QWidget):
             return
 
         base_name = os.path.splitext(os.path.basename(self.pdf_path))[0]
-        output_path = os.path.join(
-            os.path.dirname(self.pdf_path), base_name + ".xlsx"
-        )
+        output_path = os.path.join(os.path.dirname(self.pdf_path), base_name + ".xlsx")
 
         self.select_btn.setEnabled(False)
         self.convert_btn.setEnabled(False)

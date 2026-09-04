@@ -7,4 +7,4 @@ to eliminate code duplication and ensure consistent user experience.
 
 from ui.components.progress_logger import ProgressLogger
 
-__all__ = ['ProgressLogger']
+__all__ = ["ProgressLogger"]
