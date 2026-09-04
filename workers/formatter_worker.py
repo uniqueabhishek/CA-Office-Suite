@@ -11,8 +11,9 @@ import traceback
 from openpyxl import Workbook
 from openpyxl.utils.dataframe import dataframe_to_rows
 
+from config.constants import MAX_SHEET_NAME_LENGTH
 from core.excel_utils import read_all_sheets
-from core.excel_writer import apply_formatting_to_workbook
+from core.excel_writer import apply_formatting_to_worksheet
 from workers.base_worker import BaseWorker
 
 
@@ -49,6 +50,77 @@ class FormatterWorker(BaseWorker):
         self.output_folder = output_folder
         self.apply_transformations_func = apply_transformations_func
 
+    def _output_path(self, file_path):
+        """
+        Return where a processed file is written.
+
+        With no output folder the source file is overwritten in place; with one,
+        the result keeps its name but a workbook always lands as .xlsx.
+
+        Args:
+            file_path (str): Path of the source file
+
+        Returns:
+            str: Destination path
+        """
+        if not self.output_folder:
+            return file_path
+
+        base = os.path.basename(file_path)
+        name, ext = os.path.splitext(base)
+        if ext.lower() == ".csv":
+            return os.path.join(self.output_folder, base)
+        return os.path.join(self.output_folder, base if ext.lower() == ".xlsx" else name + ".xlsx")
+
+    def _save_processed(self, processed_sheets, out_path):
+        """
+        Write the processed sheets to out_path.
+
+        Args:
+            processed_sheets (dict): Sheet name -> (DataFrame, number format map)
+            out_path (str): Destination path, .csv or .xlsx
+
+        Returns:
+            None
+        """
+        if out_path.lower().endswith(".csv"):
+            if processed_sheets:
+                df_proc, _ = next(iter(processed_sheets.values()))
+                df_proc.to_csv(out_path, index=False)
+            return
+
+        wb = Workbook()
+        # Remove default sheet
+        if wb.active is not None:
+            wb.remove(wb.active)
+
+        want_formatting = (
+            self.options.get("apply_autofit", False)
+            or self.options.get("apply_number_format", False)
+            or self.options.get("apply_theme", False)
+        )
+
+        for sheetname, (df_proc, nf_map) in processed_sheets.items():
+            ws = wb.create_sheet(title=sheetname[:MAX_SHEET_NAME_LENGTH])
+            # Use fast dataframe_to_rows instead of slow iterrows
+            for row in dataframe_to_rows(df_proc, index=False, header=True):
+                ws.append(row)
+
+            # Format in memory before the single save (50% less I/O). Each sheet
+            # is formatted with its own number format map: merging the maps, as
+            # this used to, stamps one sheet's formats onto any other sheet that
+            # happens to share a header name.
+            if want_formatting:
+                apply_formatting_to_worksheet(
+                    ws,
+                    number_format_map=nf_map,
+                    apply_theme=self.options.get("apply_theme", False),
+                    apply_autofit=self.options.get("apply_autofit", False),
+                )
+
+        # Single save operation
+        wb.save(out_path)
+
     def run(self):
         """
         Main processing loop running in background thread.
@@ -79,94 +151,12 @@ class FormatterWorker(BaseWorker):
                         processed_sheets[sheetname] = (df_proc, nf_map)
 
                     # Save processed result(s)
-                    if self.output_folder:
-                        # Create same base filename in output folder
-                        base = os.path.basename(file_path)
-                        name, ext = os.path.splitext(base)
+                    out_path = self._output_path(file_path)
+                    self._save_processed(processed_sheets, out_path)
 
-                        if ext.lower() == ".csv":
-                            # For CSV: write single sheet
-                            if processed_sheets:
-                                df_proc, nf_map = list(processed_sheets.values())[0]
-                                out_path = os.path.join(self.output_folder, base)
-                                df_proc.to_csv(out_path, index=False)
-                                self.progress_update.emit(idx, f"Saved CSV: {out_path}")
-                        else:
-                            # Create workbook with sheets
-                            out_path = os.path.join(
-                                self.output_folder, base if base.lower().endswith(".xlsx") else name + ".xlsx"
-                            )
-                            wb = Workbook()
-                            # Remove default sheet
-                            if wb.active is not None:
-                                wb.remove(wb.active)
-
-                            for sheetname, (df_proc, _) in processed_sheets.items():
-                                ws = wb.create_sheet(title=sheetname[:31])
-                                # Use fast dataframe_to_rows instead of slow iterrows
-                                for row in dataframe_to_rows(df_proc, index=False, header=True):
-                                    ws.append(row)
-
-                            # Apply formatting in memory BEFORE saving (50% less I/O)
-                            if (
-                                self.options.get("apply_autofit", False)
-                                or self.options.get("apply_number_format", False)
-                                or self.options.get("apply_theme", False)
-                            ):
-                                # Build merged number_format_map across sheets
-                                merged_nf = {}
-                                for _, nfmap in processed_sheets.values():
-                                    if nfmap:
-                                        merged_nf.update(nfmap)
-                                # Apply formatting to workbook in memory
-                                apply_formatting_to_workbook(
-                                    wb,
-                                    number_format_map=merged_nf,
-                                    apply_theme=self.options.get("apply_theme", False),
-                                    apply_autofit=self.options.get("apply_autofit", False),
-                                )
-
-                            # Single save operation
-                            wb.save(out_path)
-                            self.progress_update.emit(idx, f"Saved workbook: {out_path}")
-                    else:
-                        # Overwrite original file
-                        if file_path.lower().endswith(".csv"):
-                            if processed_sheets:
-                                df_proc, nf_map = list(processed_sheets.values())[0]
-                                df_proc.to_csv(file_path, index=False)
-                                self.progress_update.emit(idx, f"Overwrote CSV: {file_path}")
-                        else:
-                            wb = Workbook()
-                            if wb.active is not None:
-                                wb.remove(wb.active)
-
-                            for sheetname, (df_proc, _) in processed_sheets.items():
-                                ws = wb.create_sheet(title=sheetname[:31])
-                                # Use fast dataframe_to_rows instead of slow iterrows
-                                for row in dataframe_to_rows(df_proc, index=False, header=True):
-                                    ws.append(row)
-
-                            # Apply formatting in memory BEFORE saving
-                            if (
-                                self.options.get("apply_autofit", False)
-                                or self.options.get("apply_number_format", False)
-                                or self.options.get("apply_theme", False)
-                            ):
-                                merged_nf = {}
-                                for _, nfmap in processed_sheets.values():
-                                    if nfmap:
-                                        merged_nf.update(nfmap)
-                                apply_formatting_to_workbook(
-                                    wb,
-                                    number_format_map=merged_nf,
-                                    apply_theme=self.options.get("apply_theme", False),
-                                    apply_autofit=self.options.get("apply_autofit", False),
-                                )
-
-                            # Single save operation
-                            wb.save(file_path)
-                            self.progress_update.emit(idx, f"Overwrote workbook: {file_path}")
+                    verb = "Saved" if self.output_folder else "Overwrote"
+                    kind = "CSV" if out_path.lower().endswith(".csv") else "workbook"
+                    self.progress_update.emit(idx, f"{verb} {kind}: {out_path}")
 
                 except Exception as e:  # pylint: disable=broad-except
                     # One bad file is logged and skipped so the batch continues.
