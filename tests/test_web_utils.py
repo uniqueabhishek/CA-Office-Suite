@@ -5,18 +5,15 @@ The split tests are regression tests: split_files_to_zip previously processed
 only file_paths[0] and silently discarded every other upload.
 """
 
-# A test names its fixtures as arguments, which shadows the fixture functions
-# at module scope. That is how pytest injects them, not an accident.
-# pylint: disable=redefined-outer-name
-
 import io
 import os
 import zipfile
 
 import pandas as pd
 import pytest
-import utils
 from openpyxl import load_workbook
+
+import utils
 
 
 @pytest.fixture

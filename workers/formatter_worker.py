@@ -158,7 +158,7 @@ class FormatterWorker(BaseWorker):
                     kind = "CSV" if out_path.lower().endswith(".csv") else "workbook"
                     self.progress_update.emit(idx, f"{verb} {kind}: {out_path}")
 
-                except Exception as e:  # pylint: disable=broad-except
+                except Exception as e:  # noqa: BLE001
                     # One bad file is logged and skipped so the batch continues.
                     error_msg = f"Error processing {file_path}: {e}"
                     self.progress_update.emit(idx, error_msg)
@@ -167,7 +167,7 @@ class FormatterWorker(BaseWorker):
             # All files processed successfully
             self.finished.emit(True, f"All {total} files processed successfully.")
 
-        except Exception as e:  # pylint: disable=broad-except
+        except Exception as e:  # noqa: BLE001
             # Last guard in a QThread body: an escaping exception would kill the
             # thread with no signal emitted, leaving the UI waiting forever.
             self.finished.emit(False, f"Unexpected error: {e}\n{traceback.format_exc()}")

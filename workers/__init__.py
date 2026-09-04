@@ -9,4 +9,4 @@ from workers.formatter_worker import FormatterWorker
 from workers.merge_worker import MergeWorker
 from workers.pdf_worker import PDFExtractWorker, PDFWorker
 
-__all__ = ["BaseWorker", "FormatterWorker", "PDFExtractWorker", "PDFWorker", "MergeWorker"]
+__all__ = ["BaseWorker", "FormatterWorker", "MergeWorker", "PDFExtractWorker", "PDFWorker"]

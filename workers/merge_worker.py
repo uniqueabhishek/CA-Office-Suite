@@ -77,8 +77,8 @@ class MergeWorker(BaseWorker):
             # Success!
             self.finished.emit(True, f"Successfully merged {total_files} files into {self.output_path}")
 
-        except Exception as e:  # pylint: disable=broad-except
+        except Exception as e:  # noqa: BLE001
             # Last guard in a QThread body: an escaping exception would kill the
             # thread with no signal emitted, leaving the UI waiting forever.
             self.emit_error(e, "Merge operation failed")
-            self.finished.emit(False, f"Error: {str(e)}")
+            self.finished.emit(False, f"Error: {e!s}")

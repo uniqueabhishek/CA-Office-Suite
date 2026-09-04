@@ -238,8 +238,10 @@ uv sync
 # Run tests
 uv run pytest
 
-# Lint
-uv run flake8
+# Format, lint and type-check
+uv run ruff format .
+uv run ruff check .
+uv run mypy .
 
 # Run the app
 uv run python desktop_suite_app.py

@@ -50,7 +50,9 @@ class ExcelMergeSplitWindow(QWidget):
 
         self._build_ui()
 
-    def _build_ui(self):
+    # Building a Qt form is one long sequence of widget construction. There
+    # is no split that does not just scatter the layout across helpers.
+    def _build_ui(self):  # noqa: PLR0915
         """Construct and lay out every widget in the window."""
         # main = QWidget()
         main_layout = QVBoxLayout()
@@ -242,7 +244,7 @@ class ExcelMergeSplitWindow(QWidget):
                         out_path = os.path.join(self.output_folder, out_name)
                         save_df_to_excel(df, out_path, sheet_name=safe_sheet[:MAX_SHEET_NAME_LENGTH])
                         self.progress_logger.log(f"  Saved sheet: {out_path}")
-                except Exception as e:  # pylint: disable=broad-except
+                except Exception as e:  # noqa: BLE001
                     # One bad file is logged and skipped so the split continues.
                     self.progress_logger.log(f"Failed to split {file_path}: {e}")
                 self.progress_logger.set_progress(idx)

@@ -165,15 +165,14 @@ git checkout -b feature/your-feature-name
 
 2. **Run code quality checks**:
    ```bash
-   # Format code
-   black .
-   isort .
+   # Format code and sort imports
+   uv run ruff format .
 
-   # Lint code
-   flake8 .
+   # Lint code (add --fix to apply safe fixes)
+   uv run ruff check .
 
    # Type checking
-   mypy core/
+   uv run mypy .
    ```
 
 3. **Run tests** (when available):
@@ -262,7 +261,7 @@ Follow **PEP 8** with these additions:
 
 #### Line Length
 ```python
-# Maximum 120 characters (configured in .flake8)
+# Maximum 120 characters (configured under [tool.ruff] in pyproject.toml)
 # Preferred 80-100 for readability
 ```
 
@@ -272,12 +271,15 @@ Follow **PEP 8** with these additions:
 class ExcelFormatter:
     pass
 
+
 # Functions/methods: snake_case
 def process_file(path):
     pass
 
+
 # Constants: UPPER_SNAKE_CASE
 MAX_FILE_SIZE = 1024 * 1024
+
 
 # Private: _leading_underscore
 def _internal_helper():
@@ -326,40 +328,39 @@ def function_name(param1: str, param2: int) -> bool:
 
 ### Code Quality Tools
 
-#### Black (Code Formatter)
+Two tools cover everything. Both read their settings from `pyproject.toml`,
+and the same settings drive the VS Code extensions, so the editor and the
+terminal always agree.
+
+#### Ruff (Formatter, Import Sorter and Linter)
 ```bash
-# Format all files
-black .
+# Format all files and sort imports
+uv run ruff format .
 
-# Check without modifying
-black --check .
-```
+# Check formatting without modifying
+uv run ruff format --check .
 
-#### isort (Import Sorter)
-```bash
-# Sort imports
-isort .
-
-# Check without modifying
-isort --check .
-```
-
-#### Flake8 (Linter)
-```bash
 # Lint all files
-flake8 .
+uv run ruff check .
 
-# Lint specific file
-flake8 excel_formatter_tool.py
+# Apply the safe automatic fixes
+uv run ruff check --fix .
+
+# Lint a specific file
+uv run ruff check excel_formatter_tool.py
 ```
+
+To silence a finding on one line, add `# noqa: <CODE>` with a short reason.
+Ruff reports a `noqa` that no longer suppresses anything, so stale ones do not
+accumulate.
 
 #### mypy (Type Checker)
 ```bash
-# Type check core modules
-mypy core/
+# Type check the whole project
+uv run mypy .
 
-# Type check specific file
-mypy excel_formatter_tool.py
+# Type check a specific file
+uv run mypy excel_formatter_tool.py
 ```
 
 ---
@@ -483,32 +484,35 @@ class TestTrimWhitespace:
 
     def test_trim_leading_spaces(self):
         """Test removal of leading spaces."""
-        df = pd.DataFrame({'A': ['  hello']})
+        df = pd.DataFrame({"A": ["  hello"]})
         result = trim_whitespace(df)
-        assert result['A'][0] == 'hello'
+        assert result["A"][0] == "hello"
 
     def test_trim_trailing_spaces(self):
         """Test removal of trailing spaces."""
-        df = pd.DataFrame({'A': ['hello  ']})
+        df = pd.DataFrame({"A": ["hello  "]})
         result = trim_whitespace(df)
-        assert result['A'][0] == 'hello'
+        assert result["A"][0] == "hello"
 
     def test_preserve_inner_spaces(self):
         """Test that inner spaces are preserved."""
-        df = pd.DataFrame({'A': ['  hello world  ']})
+        df = pd.DataFrame({"A": ["  hello world  "]})
         result = trim_whitespace(df)
-        assert result['A'][0] == 'hello world'
+        assert result["A"][0] == "hello world"
 
-    @pytest.mark.parametrize("input,expected", [
-        ('  test  ', 'test'),
-        ('no_spaces', 'no_spaces'),
-        ('', ''),
-    ])
+    @pytest.mark.parametrize(
+        "input,expected",
+        [
+            ("  test  ", "test"),
+            ("no_spaces", "no_spaces"),
+            ("", ""),
+        ],
+    )
     def test_various_inputs(self, input, expected):
         """Test with various input values."""
-        df = pd.DataFrame({'A': [input]})
+        df = pd.DataFrame({"A": [input]})
         result = trim_whitespace(df)
-        assert result['A'][0] == expected
+        assert result["A"][0] == expected
 ```
 
 ---
@@ -523,6 +527,7 @@ If your change affects performance:
    ```python
    import time
 
+
    def benchmark(func, iterations=100):
        start = time.time()
        for _ in range(iterations):
@@ -533,7 +538,8 @@ If your change affects performance:
 2. **Profile with cProfile**:
    ```python
    import cProfile
-   cProfile.run('your_function()')
+
+   cProfile.run("your_function()")
    ```
 
 3. **Report results in PR**:

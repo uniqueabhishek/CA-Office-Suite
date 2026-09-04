@@ -61,8 +61,7 @@ pytest-qt>=4.0.0
 pytest-cov>=3.0.0
 
 # Code Quality
-flake8>=4.0.0
-black>=22.0.0
+ruff>=0.16.6
 mypy>=0.950
 
 # Documentation
@@ -78,7 +77,7 @@ uv run python desktop_suite_app.py
 uv run pytest
 
 # Check code style
-flake8 .
+uv run ruff check .
 ```
 
 ---
@@ -122,8 +121,7 @@ ca_office_suite/
 |  +- test_web_utils.py
 |  +- test_flask_routes.py
 |
-+- .flake8                         # Flake8 configuration
-+- pyproject.toml                  # Dependencies, pytest config
++- pyproject.toml                  # Dependencies, ruff, mypy and pytest config
 +- uv.lock                         # Pinned dependency versions
 ```
 
@@ -140,12 +138,15 @@ Follow **PEP 8** with these specific guidelines:
 class ExcelCleanerWindow(QWidget):
     pass
 
+
 # Functions/methods: snake_case
 def read_file_to_df(path):
     pass
 
+
 # Constants: UPPER_SNAKE_CASE
 SUPPORTED_EXTENSIONS = (".xlsx", ".xls", ".csv")
+
 
 # Private methods: _leading_underscore
 def _build_ui(self):
@@ -189,8 +190,8 @@ def save_df_to_excel(df, path, sheet_name="Sheet1", number_format_map=None):
         ValueError: If DataFrame is empty
 
     Example:
-        >>> df = pd.DataFrame({'A': [1, 2, 3]})
-        >>> save_df_to_excel(df, 'output.xlsx')
+        >>> df = pd.DataFrame({"A": [1, 2, 3]})
+        >>> save_df_to_excel(df, "output.xlsx")
     """
     pass
 ```
@@ -202,9 +203,11 @@ Use type hints for function signatures:
 from typing import List, Dict, Optional
 import pandas as pd
 
+
 def read_all_sheets(path: str) -> Dict[str, pd.DataFrame]:
     """Read all sheets from an Excel file."""
     pass
+
 
 def process_files(files: List[str], options: Dict[str, bool]) -> Optional[str]:
     """Process files with given options."""
@@ -216,7 +219,7 @@ def process_files(files: List[str], options: Dict[str, bool]) -> Optional[str]:
 ### Code Formatting
 
 #### Line Length
-- **Maximum**: 120 characters (configured in `.flake8`)
+- **Maximum**: 120 characters (configured under `[tool.ruff]` in `pyproject.toml`)
 - **Preferred**: 80-100 characters for readability
 
 #### Blank Lines
@@ -316,6 +319,7 @@ Let's add a "Remove Special Characters" transformation to Excel Formatter.
 ```python
 # In excel_formatter_tool.py
 
+
 def remove_special_characters(df):
     """Remove special characters from string columns.
 
@@ -326,16 +330,16 @@ def remove_special_characters(df):
         pd.DataFrame: DataFrame with special characters removed
 
     Example:
-        >>> df = pd.DataFrame({'A': ['Hello@World!', 'Test#123']})
+        >>> df = pd.DataFrame({"A": ["Hello@World!", "Test#123"]})
         >>> result = remove_special_characters(df)
-        >>> print(result['A'].tolist())
+        >>> print(result["A"].tolist())
         ['HelloWorld', 'Test123']
     """
     df2 = df.copy()
     for col in df2.columns:
         if df2[col].dtype == object:
             # Use vectorized str.replace with regex
-            df2[col] = df2[col].str.replace(r'[^a-zA-Z0-9\s]', '', regex=True)
+            df2[col] = df2[col].str.replace(r"[^a-zA-Z0-9\s]", "", regex=True)
     return df2
 ```
 
@@ -352,10 +356,10 @@ fix_layout.addWidget(self.chk_remove_special)
 # In apply_all_transformations()
 
 # Add after text case transformation
-if options.get('remove_special_chars', False):
+if options.get("remove_special_chars", False):
     for col in result.columns:
         if result[col].dtype == object:
-            result[col] = result[col].str.replace(r'[^a-zA-Z0-9\s]', '', regex=True)
+            result[col] = result[col].str.replace(r"[^a-zA-Z0-9\s]", "", regex=True)
 ```
 
 **Step 4**: Update preview logic
@@ -372,7 +376,7 @@ if self.chk_remove_special.isChecked():
 
 options = {
     # ... existing options ...
-    'remove_special_chars': self.chk_remove_special.isChecked(),
+    "remove_special_chars": self.chk_remove_special.isChecked(),
 }
 ```
 
@@ -411,34 +415,34 @@ from excel_formatter_tool import trim_whitespace
 class TestTrimWhitespace:
     def test_trim_leading_spaces(self):
         """Test removal of leading spaces."""
-        df = pd.DataFrame({'A': ['  hello', '  world']})
+        df = pd.DataFrame({"A": ["  hello", "  world"]})
         result = trim_whitespace(df)
-        assert result['A'].tolist() == ['hello', 'world']
+        assert result["A"].tolist() == ["hello", "world"]
 
     def test_trim_trailing_spaces(self):
         """Test removal of trailing spaces."""
-        df = pd.DataFrame({'A': ['hello  ', 'world  ']})
+        df = pd.DataFrame({"A": ["hello  ", "world  "]})
         result = trim_whitespace(df)
-        assert result['A'].tolist() == ['hello', 'world']
+        assert result["A"].tolist() == ["hello", "world"]
 
     def test_trim_both_sides(self):
         """Test removal of both leading and trailing spaces."""
-        df = pd.DataFrame({'A': ['  hello  ', '  world  ']})
+        df = pd.DataFrame({"A": ["  hello  ", "  world  "]})
         result = trim_whitespace(df)
-        assert result['A'].tolist() == ['hello', 'world']
+        assert result["A"].tolist() == ["hello", "world"]
 
     def test_preserve_inner_spaces(self):
         """Test that inner spaces are preserved."""
-        df = pd.DataFrame({'A': ['  hello world  ']})
+        df = pd.DataFrame({"A": ["  hello world  "]})
         result = trim_whitespace(df)
-        assert result['A'].tolist() == ['hello world']
+        assert result["A"].tolist() == ["hello world"]
 
     def test_non_string_columns_unchanged(self):
         """Test that numeric columns are not affected."""
-        df = pd.DataFrame({'A': [1, 2, 3], 'B': ['  text  ']})
+        df = pd.DataFrame({"A": [1, 2, 3], "B": ["  text  "]})
         result = trim_whitespace(df)
-        assert result['A'].tolist() == [1, 2, 3]
-        assert result['B'].tolist() == ['text']
+        assert result["A"].tolist() == [1, 2, 3]
+        assert result["B"].tolist() == ["text"]
 ```
 
 ### Running Tests
@@ -471,9 +475,11 @@ pytest --cov=. --cov-report=html
 import cProfile
 import pstats
 
+
 def profile_function():
     # Your code here
     pass
+
 
 # Profile the function
 profiler = cProfile.Profile()
@@ -483,7 +489,7 @@ profiler.disable()
 
 # Print stats
 stats = pstats.Stats(profiler)
-stats.sort_stats('cumulative')
+stats.sort_stats("cumulative")
 stats.print_stats(20)  # Top 20 slowest functions
 ```
 
@@ -524,6 +530,7 @@ L **DON'T**:
 import time
 import pandas as pd
 
+
 # Benchmark function
 def benchmark(func, *args, iterations=100):
     """Benchmark a function's execution time."""
@@ -537,16 +544,20 @@ def benchmark(func, *args, iterations=100):
     avg_time = sum(times) / len(times)
     print(f"{func.__name__}: {avg_time:.4f}s average")
 
+
 # Example
-df = pd.DataFrame({'A': [' text ' for _ in range(10000)]})
+df = pd.DataFrame({"A": [" text " for _ in range(10000)]})
+
 
 # Old method (slow)
 def trim_with_apply(df):
-    df['A'] = df['A'].apply(lambda x: x.strip())
+    df["A"] = df["A"].apply(lambda x: x.strip())
+
 
 # New method (fast)
 def trim_vectorized(df):
-    df['A'] = df['A'].str.strip()
+    df["A"] = df["A"].str.strip()
+
 
 benchmark(trim_with_apply, df.copy())  # ~0.5s
 benchmark(trim_vectorized, df.copy())  # ~0.02s  (25x faster!)
@@ -560,7 +571,7 @@ benchmark(trim_vectorized, df.copy())  # ~0.02s  (25x faster!)
 
 ```python
 # Enable Qt debug messages
-os.environ['QT_DEBUG_PLUGINS'] = '1'
+os.environ["QT_DEBUG_PLUGINS"] = "1"
 ```
 
 ### Print Debugging in Workers
@@ -577,12 +588,14 @@ class FileProcessorThread(QThread):
 ```python
 import pdb
 
+
 def problematic_function():
     # Set breakpoint
     pdb.set_trace()
     # Code execution pauses here
     result = some_operation()
     return result
+
 
 # Run and interact:
 # n - next line
@@ -636,16 +649,16 @@ git checkout -b feature/my-new-feature
 ### 4. Test Changes
 ```bash
 # Run tests
-pytest
-
-# Check code style
-flake8 .
+uv run pytest
 
 # Format code
-black .
+uv run ruff format .
+
+# Lint code
+uv run ruff check .
 
 # Type checking
-mypy core/
+uv run mypy .
 ```
 
 ### 5. Commit Changes
@@ -697,9 +710,10 @@ Follow **Semantic Versioning** (semver):
 
 3. **Run Full Test Suite**
    ```bash
-   pytest
-   flake8 .
-   mypy core/
+   uv run pytest
+   uv run ruff format --check .
+   uv run ruff check .
+   uv run mypy .
    ```
 
 4. **Update Documentation**

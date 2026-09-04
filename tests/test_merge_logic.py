@@ -2,10 +2,6 @@
 Tests for core.merge_logic - the merge behaviour shared by both front-ends.
 """
 
-# A test names its fixtures as arguments, which shadows the fixture functions
-# at module scope. That is how pytest injects them, not an accident.
-# pylint: disable=redefined-outer-name
-
 import os
 
 import pandas as pd
@@ -73,7 +69,7 @@ class TestMergeFilesLogic:
             fh.write("this is not a workbook")
 
         out = os.path.join(tmp_path, "merged.xlsx")
-        merge_files_logic(same_shape_files + [broken], out)
+        merge_files_logic([*same_shape_files, broken], out)
 
         assert os.path.exists(out)
         assert load_workbook(out)["Merged"].max_row == 4

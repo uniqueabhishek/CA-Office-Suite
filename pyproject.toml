@@ -31,14 +31,58 @@ dependencies = [
 # manages the environment without building this project itself.
 package = false
 
-# Both formatters must agree with the 120-column limit in .flake8, otherwise
-# running them would introduce the very errors flake8 then reports.
-[tool.black]
+# Ruff is the whole lint-and-format toolchain: it replaces flake8, black, isort
+# and pylint, and the same config drives both the CLI and the editor extension.
+#
+#   uv run ruff check .          # lint (add --fix to apply safe fixes)
+#   uv run ruff format .         # format (add --check to verify only)
+#
+# Ruff honours .gitignore, so .venv, build, dist, legacy_backup and uploads are
+# already skipped without listing them here.
+[tool.ruff]
 line-length = 120
+# Inferred from requires-python, but pinned so UP rules cannot start suggesting
+# 3.11+ syntax if that bound is ever relaxed.
+target-version = "py310"
 
-[tool.isort]
-profile = "black"
-line_length = 120
+[tool.ruff.lint]
+# E/W/F  pycodestyle + pyflakes   (was flake8)
+# I      import ordering          (was isort)
+# PL     pylint's ported checks   (was pylint)
+# UP     modernise syntax for the 3.10 floor
+# B      bugbear: likely-bug patterns (mutable defaults, late-binding closures)
+# SIM    simplifications, RUF ruff-specific checks
+#
+# BLE    blind `except Exception`. Every existing one is a top-level guard that
+#        turns a failure into a dialog, a flash message or a skipped file rather
+#        than a dead UI thread, and carries `# noqa: BLE001` with the reason.
+#        Keeping the rule on means any new one has to justify itself the same way.
+select = ["E", "W", "F", "I", "PL", "UP", "B", "BLE", "SIM", "RUF"]
+ignore = [
+    # Magic-value comparisons: this code is full of Excel row/column indices
+    # and Qt constants that are clearer inline than as named constants.
+    "PLR2004",
+    # Argument-count limit. Qt slots and the Flask helpers take what the
+    # framework hands them; splitting them would add indirection, not clarity.
+    "PLR0913",
+    # Ruff's formatter owns wrapping, and E501 would still flag the long
+    # string literals it deliberately leaves alone.
+    "E501",
+]
+
+[tool.ruff.lint.per-file-ignores]
+# A long test can be a long list of assertions; that is not complexity.
+"tests/**" = ["PLR0915"]
+
+[tool.ruff.lint.isort]
+# blueprints and utils live under flask_app/ rather than the repo root, so the
+# sorter cannot find them on its own and would file them as third-party.
+known-first-party = ["blueprints", "config", "core", "tally_api", "ui", "utils", "workers"]
+
+[tool.ruff.format]
+# Match the black output the codebase was formatted with.
+quote-style = "double"
+docstring-code-format = true
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
@@ -51,19 +95,20 @@ addopts = "-q"
 python_version = "3.10"
 mypy_path = [".", "flask_app"]
 ignore_missing_imports = true
+# Almost nothing here is annotated, and without this mypy skips those function
+# bodies entirely - it was reporting success while the editor found real None
+# crashes in the Flask routes. Leave it on.
+check_untyped_defs = true
 exclude = "^(\\.venv|build|dist|legacy_backup|uploads)/"
 
-[tool.pylint.main]
-# PyQt5 is a C extension, so pylint cannot see its members by static analysis
-# and reports every widget import as no-name-in-module. Loading the extension
-# lets it introspect the real modules instead.
-extension-pkg-allow-list = ["PyQt5"]
-
-[tool.pylint.typecheck]
-# Loading the extension still leaves pylint blind to the members of PyQt5's sip
-# enum types, so Qt.AlignmentFlag.AlignCenter reads as no-member even though it
-# resolves at runtime (== 132). Leave that one class uninspected.
-ignored-classes = ["AlignmentFlag"]
+# Pyright is what the editor's Pylance runs. Without this it does not know
+# where the interpreter is, and treats flask_app/ imports as unresolvable the
+# same way mypy did before mypy_path was set.
+[tool.pyright]
+venvPath = "."
+venv = ".venv"
+extraPaths = ["flask_app"]
+exclude = [".venv", "build", "dist", "legacy_backup", "uploads", "**/__pycache__"]
 
 [dependency-groups]
 dev = [
@@ -71,10 +116,6 @@ dev = [
     "pytest-qt>=4.0.0,<5.0.0",
     "pytest-cov>=3.0.0,<5.0.0",
     "pytest-mock>=3.10.0,<4.0.0",
-    "flake8>=4.0.0,<7.0.0",
-    "black>=22.0.0,<24.0.0",
-    "isort>=5.10.0,<6.0.0",
-    "pylint>=2.12.0,<4.0.0",
     "mypy>=0.950,<2.0.0",
     "types-python-dateutil>=2.8.0",
     "types-requests>=2.28.0",
@@ -85,6 +126,7 @@ dev = [
     "line-profiler>=3.5.0,<5.0.0",
     "ipython>=8.0.0,<9.0.0",
     "ipdb>=0.13.0,<1.0.0",
+    "ruff>=0.16.6,<1.0.0",
 ]
 
 # Only needed to freeze the desktop app into an executable. Not installed by a

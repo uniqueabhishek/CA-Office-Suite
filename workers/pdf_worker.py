@@ -86,10 +86,10 @@ class PDFExtractWorker(BaseWorker):
             else:
                 self.finished.emit(True, f"Found {len(tables)} tables.")
 
-        except Exception as e:  # pylint: disable=broad-except
+        except Exception as e:  # noqa: BLE001
             self.emit_error(e, "PDF scan failed")
             self.tables_ready.emit([])
-            self.finished.emit(False, f"Error: {str(e)}")
+            self.finished.emit(False, f"Error: {e!s}")
 
 
 class PDFWorker(BaseWorker):
@@ -169,8 +169,8 @@ class PDFWorker(BaseWorker):
             # Success!
             self.finished.emit(True, f"Successfully extracted {total_tables} tables to {self.output_path}")
 
-        except Exception as e:  # pylint: disable=broad-except
+        except Exception as e:  # noqa: BLE001
             # Last guard in a QThread body: an escaping exception would kill the
             # thread with no signal emitted, leaving the UI waiting forever.
             self.emit_error(e, "PDF extraction failed")
-            self.finished.emit(False, f"Error: {str(e)}")
+            self.finished.emit(False, f"Error: {e!s}")

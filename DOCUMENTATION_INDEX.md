@@ -34,10 +34,9 @@ This project includes comprehensive documentation covering all aspects from user
 
 | File | Purpose |
 |------|---------|
-| **[pyproject.toml](pyproject.toml)** | Dependencies, dev group and pytest configuration |
+| **[pyproject.toml](pyproject.toml)** | Dependencies, dev group, ruff, mypy and pytest configuration |
 | **[uv.lock](uv.lock)** | Pinned dependency versions for reproducible installs |
 | **[LICENSE](LICENSE)** | MIT License terms |
-| **[.flake8](.flake8)** | Code linting configuration |
 
 ---
 

@@ -2,13 +2,16 @@
 This module handles the generation of the Balance Sheet Excel file
 from the session data collected across various pages.
 """
+
 import io
 
-from openpyxl import Workbook  # pylint: disable=import-error
-from openpyxl.styles import Font  # pylint: disable=import-error
+from openpyxl import Workbook
+from openpyxl.styles import Font
 
 
-def generate_balance_sheet(session_data):
+# The workbook is one sheet per form page, laid out in order. Splitting the
+# function per page would only scatter the layout across helpers.
+def generate_balance_sheet(session_data):  # noqa: PLR0912, PLR0915
     """
     Generates an Excel file from the session data collected across multiple pages.
     Returns a BytesIO object containing the Excel file.
@@ -41,7 +44,9 @@ def generate_balance_sheet(session_data):
     # as lists, so these arrive as parallel lists. The scalar branch below is a
     # safety net for sessions saved before that helper existed.
     if isinstance(sch3_particulars, list):
-        for p, a in zip(sch3_particulars, sch3_amounts):
+        # The two lists come from separate form fields, so a row with a blank
+        # amount can leave them unequal; stop at the shorter one as before.
+        for p, a in zip(sch3_particulars, sch3_amounts, strict=False):
             ws1.append([p, a])
     else:
         # Fallback if flattened
@@ -112,11 +117,9 @@ def generate_balance_sheet(session_data):
             max_length = 0
             column = col[0].column_letter  # Get the column name
             for cell in col:
-                try:
-                    if len(str(cell.value)) > max_length:
-                        max_length = len(str(cell.value))
-                except Exception:  # pylint: disable=broad-except
-                    pass
+                # str() and len() cannot fail here, so the try/except that used
+                # to wrap this only hid whatever else might go wrong.
+                max_length = max(max_length, len(str(cell.value)))
             adjusted_width = max_length + 2
             ws.column_dimensions[column].width = adjusted_width
 

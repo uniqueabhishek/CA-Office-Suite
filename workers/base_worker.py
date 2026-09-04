@@ -49,7 +49,7 @@ class BaseWorker(QThread):
         """
         self.is_cancelled = True
 
-    def emit_progress(self, current, total, message):  # pylint: disable=unused-argument
+    def emit_progress(self, current, total, message):
         """
         Helper method to emit progress updates.
 

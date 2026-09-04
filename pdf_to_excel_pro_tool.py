@@ -165,7 +165,7 @@ class PDFTableExtractor(QWidget):
         """
         Export the checked tables to Excel in a background thread.
         """
-        selected_tables = [tbl for tbl, chk in zip(self.tables, self.checkboxes) if chk.isChecked()]
+        selected_tables = [tbl for tbl, chk in zip(self.tables, self.checkboxes, strict=True) if chk.isChecked()]
         if not selected_tables:
             QMessageBox.information(
                 self,

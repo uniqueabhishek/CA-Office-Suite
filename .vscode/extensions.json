@@ -1,0 +1,14 @@
+{
+    // Pylance ships with ms-python.python and does type checking in the editor;
+    // ruff does formatting and linting. Nothing else is needed.
+    "recommendations": [
+        "ms-python.python",
+        "charliermarsh.ruff"
+    ],
+    "unwantedRecommendations": [
+        "ms-python.black-formatter",
+        "ms-python.isort",
+        "ms-python.flake8",
+        "ms-python.pylint"
+    ]
+}

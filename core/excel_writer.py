@@ -71,9 +71,7 @@ def _autofit_columns(ws):
         # Optimized: no exception handling in this hot loop
         for cell in col:
             val = cell.value
-            length = 0 if val is None else len(str(val))
-            if length > max_len:
-                max_len = length
+            max_len = max(max_len, 0 if val is None else len(str(val)))
 
         ws.column_dimensions[col_letter].width = _fitted_width(max_len)
 

@@ -18,5 +18,17 @@
     // resolve, so the warning reports nothing actionable.
     "python.analysis.diagnosticSeverityOverrides": {
         "reportMissingModuleSource": "none"
+    },
+
+    // Ruff (charliermarsh.ruff) is the only formatter and linter. It reads
+    // [tool.ruff] from pyproject.toml, the same config `uv run ruff` uses, so
+    // saving a file produces exactly what the CLI check expects.
+    "[python]": {
+        "editor.defaultFormatter": "charliermarsh.ruff",
+        "editor.formatOnSave": true,
+        "editor.codeActionsOnSave": {
+            "source.fixAll.ruff": "explicit",
+            "source.organizeImports.ruff": "explicit"
+        }
     }
 }

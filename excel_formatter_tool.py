@@ -69,7 +69,9 @@ class ExcelCleanerWindow(QWidget):
 
         self._build_ui()
 
-    def _build_ui(self):
+    # Building a Qt form is one long sequence of widget construction. There
+    # is no split that does not just scatter the layout across helpers.
+    def _build_ui(self):  # noqa: PLR0915
         """Construct and lay out every widget in the window."""
         # main = QWidget()
         main_layout = QHBoxLayout()
@@ -292,7 +294,7 @@ class ExcelCleanerWindow(QWidget):
         path = item.text()
         try:
             df = read_file_to_df(path)
-        except Exception as e:  # pylint: disable=broad-except
+        except Exception as e:  # noqa: BLE001
             # Any unreadable file becomes a dialog rather than a crashed preview.
             QMessageBox.critical(self, "Read Error", f"Failed to read {path}\n{e}")
             return
@@ -343,10 +345,7 @@ class ExcelCleanerWindow(QWidget):
         for i in range(rows):
             for j in range(cols):
                 val = df.iloc[i, j]
-                if pd.isna(val):
-                    text = ""
-                else:
-                    text = str(val)
+                text = "" if pd.isna(val) else str(val)
                 item = QTableWidgetItem(text)
                 self.table.setItem(i, j, item)
         self.table.resizeColumnsToContents()

@@ -3,6 +3,8 @@ Main Flask Application for CA Office Suite.
 This module processes PDF to Excel conversion, Excel formatting,
 merging/splitting, and hosts the Balance Sheet generator.
 """
+
+import contextlib
 import logging
 import os
 import sys
@@ -16,11 +18,13 @@ _REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if _REPO_ROOT not in sys.path:
     sys.path.insert(0, _REPO_ROOT)
 
-import utils  # noqa: E402
-from blueprints.balance_sheet import balance_sheet_bp  # noqa: E402
+# These imports must follow the sys.path bootstrap above, which ruff reports
+# as E402 unless each line says otherwise.
 from flask import Flask, flash, redirect, render_template, request, send_file, session, url_for  # noqa: E402
 from werkzeug.utils import secure_filename  # noqa: E402
 
+import utils  # noqa: E402
+from blueprints.balance_sheet import balance_sheet_bp  # noqa: E402
 from config.constants import ALLOWED_UPLOAD_EXTENSIONS, UPLOAD_RETENTION_SECONDS  # noqa: E402
 
 logger = logging.getLogger(__name__)
@@ -92,10 +96,8 @@ def discard_upload(*paths):
     for path in paths:
         if not path:
             continue
-        try:
+        with contextlib.suppress(OSError):
             os.remove(path)
-        except OSError:
-            pass
 
 
 def sweep_stale_uploads():
@@ -125,7 +127,7 @@ def sweep_stale_uploads():
 
 
 @app.route("/", methods=["GET", "POST"])
-def index():
+def index():  # noqa: PLR0911 - one early return per validation failure reads better than nesting
     """
     Home page (PDF to Excel).
     - GET: Renders the upload form.
@@ -162,13 +164,13 @@ def index():
                 session["current_pdf"] = unique_filename
                 session["original_filename"] = filename
                 return render_template("select_tables.html", tables=tables, filename=filename, active_tab="pdf")
-            except Exception as e:  # pylint: disable=broad-except
+            except Exception as e:
                 # Broad exception catch is intentional for top-level error handling
                 # We want to catch everything during processing to avoid crashing the server
                 # and show a user-friendly flash message instead.
                 discard_upload(file_path)
                 logger.exception("PDF processing failed for %s", filename)
-                flash(f"Error processing PDF: {str(e)}")
+                flash(f"Error processing PDF: {e!s}")
                 return redirect(request.url)
         else:
             flash("Invalid file type.")
@@ -209,9 +211,9 @@ def convert():
             as_attachment=True,
             download_name=output_filename,
         )
-    except Exception as e:  # pylint: disable=broad-except
+    except Exception as e:
         logger.exception("Table conversion failed for %s", current_pdf)
-        flash(f"Error converting file: {str(e)}")
+        flash(f"Error converting file: {e!s}")
         return redirect(url_for("index"))
     finally:
         # The upload has served its purpose once the workbook is built.
@@ -272,7 +274,7 @@ def formatter():
                 as_attachment=True,
                 download_name=out_name,
             )
-        except Exception as e:  # pylint: disable=broad-except
+        except Exception as e:
             logger.exception("Formatting failed for %s", filename)
             flash(f"Error processing file: {e}")
             return redirect(request.url)
@@ -311,7 +313,7 @@ def merge():
         sweep_stale_uploads()
         saved_paths = []
         original_names = []
-        for f, upload_name in zip(files, upload_names):
+        for f, upload_name in zip(files, upload_names, strict=True):
             fname = secure_filename(upload_name)
             path = os.path.join(app.config["UPLOAD_FOLDER"], f"merge_{uuid.uuid4()}_{fname}")
             f.save(path)
@@ -332,14 +334,14 @@ def merge():
                     as_attachment=True,
                     download_name=merged_name,
                 )
-            else:
-                # Split every uploaded file; a single response can only carry one
-                # file, so the resulting sheets are returned as a zip archive.
-                zip_stream = utils.split_files_to_zip(saved_paths, original_names)
-                return send_file(
-                    zip_stream, mimetype="application/zip", as_attachment=True, download_name="split_files.zip"
-                )
-        except Exception as e:  # pylint: disable=broad-except
+
+            # Split every uploaded file; a single response can only carry one
+            # file, so the resulting sheets are returned as a zip archive.
+            zip_stream = utils.split_files_to_zip(saved_paths, original_names)
+            return send_file(
+                zip_stream, mimetype="application/zip", as_attachment=True, download_name="split_files.zip"
+            )
+        except Exception as e:
             logger.exception("%s failed for %s", operation, original_names)
             flash(f"Error processing: {e}")
             return redirect(request.url)

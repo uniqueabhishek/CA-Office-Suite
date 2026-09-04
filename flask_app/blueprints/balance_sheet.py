@@ -3,8 +3,8 @@ This module defines the blueprint and routes for the Balance Sheet generation fe
 It handles multiple pages (tabs) of the balance sheet form and integrates with the
 Excel generation logic to produce the final downloadable report.
 """
-from blueprints.excel_gen import generate_balance_sheet  # pylint: disable=import-error
-from flask import (  # pylint: disable=import-error
+
+from flask import (
     Blueprint,
     redirect,
     render_template,
@@ -13,6 +13,8 @@ from flask import (  # pylint: disable=import-error
     session,
     url_for,
 )
+
+from blueprints.excel_gen import generate_balance_sheet
 
 balance_sheet_bp = Blueprint("balance_sheet", __name__, template_folder="templates")
 
@@ -27,7 +29,7 @@ def get_form_data(req_form):
     data = req_form.to_dict()
     # Explicitly handle known list fields or pattern matching
     # Check for keys ending in brackets, e.g., "sch3_particulars[]"
-    for key in req_form.keys():
+    for key in req_form:
         if key.endswith("[]") or key in ["sch3_particulars", "sch3_amount"]:
             data[key] = req_form.getlist(key)
     return data
@@ -162,5 +164,5 @@ def generate_excel_route():
             as_attachment=True,
             download_name="Balance_Sheet.xlsx",
         )
-    except Exception as e:  # pylint: disable=broad-except
-        return f"Error generating Excel: {str(e)}", 500
+    except Exception as e:  # noqa: BLE001
+        return f"Error generating Excel: {e!s}", 500

@@ -109,7 +109,7 @@ def split_files_to_zip(file_paths, original_names):
     used_names = set()
 
     with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zip_file:
-        for fpath, fname in zip(file_paths, original_names):
+        for fpath, fname in zip(file_paths, original_names, strict=True):
             sheets = read_all_sheets(fpath)
             base = safe_name(os.path.splitext(fname)[0])
 
@@ -159,19 +159,18 @@ def extract_tables_from_pdf(pdf_path):
 def convert_selected_tables_to_excel(pdf_path, selected_indices):
     """Write the tables identified by 'page-table' ids into one workbook."""
     output = io.BytesIO()
-    with pd.ExcelWriter(output, engine="openpyxl") as writer:
-        with pdfplumber.open(pdf_path) as pdf:
-            for i, page in enumerate(pdf.pages):
-                page_tables = page.extract_tables()
-                for j, table in enumerate(page_tables):
-                    if f"{i+1}-{j+1}" in selected_indices and table:
-                        # Same header handling the preview uses, so the exported
-                        # workbook matches what the user selected on screen.
-                        df = (
-                            pd.DataFrame(table[1:], columns=dedupe_headers(table[0]))
-                            if len(table) > 1
-                            else pd.DataFrame(table)
-                        )
-                        df.to_excel(writer, sheet_name=f"Page{i+1}_Table{j+1}", index=False)
+    with pd.ExcelWriter(output, engine="openpyxl") as writer, pdfplumber.open(pdf_path) as pdf:
+        for i, page in enumerate(pdf.pages):
+            page_tables = page.extract_tables()
+            for j, table in enumerate(page_tables):
+                if f"{i + 1}-{j + 1}" in selected_indices and table:
+                    # Same header handling the preview uses, so the exported
+                    # workbook matches what the user selected on screen.
+                    df = (
+                        pd.DataFrame(table[1:], columns=dedupe_headers(table[0]))
+                        if len(table) > 1
+                        else pd.DataFrame(table)
+                    )
+                    df.to_excel(writer, sheet_name=f"Page{i + 1}_Table{j + 1}", index=False)
     output.seek(0)
     return output

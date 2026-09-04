@@ -19,7 +19,9 @@ from core.excel_writer import apply_formatting_to_workbook, save_df_to_excel
 logger = logging.getLogger(__name__)
 
 
-def merge_files_logic(files, merged_path, on_progress=None, should_cancel=None, apply_formatting=True):
+def merge_files_logic(  # noqa: PLR0912 - one branch per input format and per cancellation checkpoint
+    files, merged_path, on_progress=None, should_cancel=None, apply_formatting=True
+):
     """
     Merge multiple files into one workbook.
 
@@ -69,12 +71,12 @@ def merge_files_logic(files, merged_path, on_progress=None, should_cancel=None, 
                 report(idx, f"Skipped {os.path.basename(f)}: no sheets found")
                 continue
             # prefer first sheet for column comparison
-            first_sheet_name = list(sheets.keys())[0]
+            first_sheet_name = next(iter(sheets.keys()))
             df = sheets[first_sheet_name]
             dfs.append((f, df))
             colsets.append(tuple(df.columns))
             sheetmaps[f] = sheets
-        except Exception:  # pylint: disable=broad-except
+        except Exception:
             # A single unreadable file should not abort the whole merge
             logger.warning("Skipping %s during merge: unreadable", f, exc_info=True)
             report(idx, f"Skipped {os.path.basename(f)}: unreadable")

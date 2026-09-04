@@ -17,6 +17,16 @@
 - `pyinstaller` lives in the non-default `packaging` group — build releases with
   `uv sync --group packaging`
 
+## Lint, Format and Types
+
+- **ruff** is the only formatter and linter (it replaced flake8, black, isort and
+  pylint). **mypy** is the CLI type checker; Pylance covers the editor
+- Before committing: `uv run ruff format .`, `uv run ruff check .`, `uv run mypy .`
+- All settings live under `[tool.ruff]` / `[tool.mypy]` in `pyproject.toml`. There
+  is no `.flake8`, `.pylintrc` or `[tool.black]` — do not recreate them
+- Suppress a single finding with `# noqa: <CODE>` plus a reason on the same line.
+  RUF100 reports any `noqa` that no longer suppresses anything, so remove those
+
 ## VS Code Setup
 
 - Set `python.defaultInterpreterPath` to `${workspaceFolder}/.venv/Scripts/python.exe`
