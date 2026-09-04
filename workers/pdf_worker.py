@@ -53,6 +53,11 @@ class PDFExtractWorker(BaseWorker):
             tables = []
             with pdfplumber.open(self.pdf_path) as pdf:
                 total_pages = len(pdf.pages)
+                if total_pages == 0:
+                    self.tables_ready.emit([])
+                    self.finished.emit(False, "This PDF has no pages.")
+                    return
+
                 # Page count is only known once the PDF is open, so progress is
                 # reported as a percentage against a fixed 0-100 scale.
                 self.emit_progress(0, 100, f"Scanning {total_pages} pages...")
@@ -70,7 +75,7 @@ class PDFExtractWorker(BaseWorker):
                     self.emit_progress(
                         int((i + 1) / total_pages * 100),
                         100,
-                        f"Scanned page {i + 1}/{total_pages} - {len(tables)} tables so far"
+                        f"Scanned page {i + 1}/{total_pages} - {len(tables)} tables so far",
                     )
 
             self.tables_ready.emit(tables)
@@ -152,21 +157,13 @@ class PDFWorker(BaseWorker):
                     sheet_name = f"Page{page_num}_Table{table_num}"
 
                     # Emit progress
-                    self.emit_progress(
-                        idx,
-                        total_tables,
-                        f"Extracting table {idx}/{total_tables}: {sheet_name}"
-                    )
+                    self.emit_progress(idx, total_tables, f"Extracting table {idx}/{total_tables}: {sheet_name}")
 
                     # Write table to Excel
                     df.to_excel(writer, sheet_name=sheet_name, index=False)
 
                 # Final progress update
-                self.emit_progress(
-                    total_tables,
-                    total_tables,
-                    f"Saved {total_tables} tables to {self.output_path}"
-                )
+                self.emit_progress(total_tables, total_tables, f"Saved {total_tables} tables to {self.output_path}")
 
             # Success!
             self.finished.emit(True, f"Successfully extracted {total_tables} tables to {self.output_path}")
