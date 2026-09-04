@@ -1,25 +1,27 @@
-import pdfplumber
-import pandas as pd
+"""
+Bridge between the Flask routes and the shared core/ processing modules.
+
+Routes deal in uploaded files and in-memory responses; these helpers adapt the
+path-based core logic to the streams Flask needs to send back.
+"""
+
 import io
 import os
+import uuid
 import zipfile
-from flask import current_app
 
-# Import core modules
-from core.excel_utils import read_all_sheets, read_file_to_df
-from core.excel_writer import save_df_to_excel, apply_formatting_to_workbook
+import pandas as pd
+import pdfplumber
+from openpyxl import load_workbook
 
-# Import extracted parity logic
-from core.transformations import (
-    detect_and_convert_numbers,
-    trim_whitespace,
-    normalize_dates,
-    apply_text_case,
-    apply_all_transformations
-)
+from config.constants import MAX_SHEET_NAME_LENGTH
+from core.excel_utils import read_all_sheets
+from core.excel_writer import apply_formatting_to_workbook
 from core.merge_logic import merge_files_logic
+from core.transformations import apply_all_transformations
 
 # --- BRIDGE FUNCTIONS ---
+
 
 def process_excel_file(filepath, original_filename, options):
     """
@@ -31,21 +33,16 @@ def process_excel_file(filepath, original_filename, options):
     # In-memory workbook
     output = io.BytesIO()
 
-    # We will use ExcelWriter with openpyxl
-    # Note: apply_all_transformations returns (df, conversions, nf_map)
-    # The desktop app processes sheet by sheet.
-
     processed_sheets = {}
 
     for sheet_name, df in sheets.items():
-        # Use simple or optimized pipeline?
-        # The extracted code has 'apply_all_transformations'. Let's use that for exact match.
-        df_proc, conversions, nf_map = apply_all_transformations(df, options)
+        # Same transformation pipeline the desktop formatter uses
+        df_proc, _conversions, nf_map = apply_all_transformations(df, options)
         processed_sheets[sheet_name] = (df_proc, nf_map)
 
     with pd.ExcelWriter(output, engine='openpyxl') as writer:
         for sheet_name, (df_proc, _) in processed_sheets.items():
-             df_proc.to_excel(writer, sheet_name=sheet_name[:31], index=False)
+            df_proc.to_excel(writer, sheet_name=sheet_name[:MAX_SHEET_NAME_LENGTH], index=False)
 
     # Rewind to read for openpyxl formatting
     output.seek(0)
@@ -57,7 +54,6 @@ def process_excel_file(filepath, original_filename, options):
             merged_nf.update(nf_map)
 
     # Apply Formatting using core writer logic
-    from openpyxl import load_workbook
     wb = load_workbook(output)
 
     apply_formatting_to_workbook(
@@ -78,16 +74,14 @@ def process_excel_file(filepath, original_filename, options):
 
 def merge_files(file_paths):
     """
-    Merges multiple files into one workbook using Desktop logic.
+    Merges multiple files into one workbook using the shared desktop logic.
+
+    merge_files_logic writes to a path, so the result is staged in a temp file
+    and read back into memory for the response.
     """
-    # merge_files_logic writes to a file path usually.
-    # We need to adapt it to write to BytesIO or temp file.
-    # Since our merge_logic.py takes a path, we'll use a temp file.
-
-    import uuid
-    import shutil
-
-    temp_output_path = os.path.join(os.path.dirname(file_paths[0]), f"merged_temp_{uuid.uuid4()}.xlsx")
+    temp_output_path = os.path.join(
+        os.path.dirname(file_paths[0]), f"merged_temp_{uuid.uuid4()}.xlsx"
+    )
 
     try:
         # Call the shared logic directly
@@ -109,8 +103,6 @@ def split_files_to_zip(file_paths, original_names):
     Splits the FIRST file in the list (web update limit) into sheets and zips them.
     (Desktop logic uses read_all_sheets + save_df_to_excel loop, which is what we do here too)
     """
-    import zipfile
-
     # Only process first file for now to match strict constraint of single response
     fpath = file_paths[0]
     fname = original_names[0]
@@ -124,8 +116,6 @@ def split_files_to_zip(file_paths, original_names):
         for sname, df in sheets.items():
             # Save sheet to bytes
             sheet_buffer = io.BytesIO()
-            # Use core saver? It saves to disk.
-            # We need pure bytes. dataframe to excel is standard pandas.
             df.to_excel(sheet_buffer, index=False)
             sheet_buffer.seek(0)
 
@@ -135,8 +125,11 @@ def split_files_to_zip(file_paths, original_names):
     return zip_buffer
 
 
-# --- PDF LOGIC (EXISTING) ---
+# --- PDF LOGIC ---
+
+
 def extract_tables_from_pdf(pdf_path):
+    """Extract every table in the PDF as preview HTML plus JSON data."""
     tables = []
     with pdfplumber.open(pdf_path) as pdf:
         for i, page in enumerate(pdf.pages):
@@ -164,16 +157,21 @@ def extract_tables_from_pdf(pdf_path):
                     })
     return tables
 
+
 def convert_selected_tables_to_excel(pdf_path, selected_indices):
+    """Write the tables identified by 'page-table' ids into one workbook."""
     output = io.BytesIO()
     with pd.ExcelWriter(output, engine='openpyxl') as writer:
         with pdfplumber.open(pdf_path) as pdf:
             for i, page in enumerate(pdf.pages):
                 page_tables = page.extract_tables()
                 for j, table in enumerate(page_tables):
-                    if f"{i+1}-{j+1}" in selected_indices:
-                        if table:
-                            df = pd.DataFrame(table[1:], columns=table[0]) if len(table)>1 else pd.DataFrame(table)
-                            df.to_excel(writer, sheet_name=f"Page{i+1}_Table{j+1}", index=False)
+                    if f"{i+1}-{j+1}" in selected_indices and table:
+                        df = (
+                            pd.DataFrame(table[1:], columns=table[0])
+                            if len(table) > 1
+                            else pd.DataFrame(table)
+                        )
+                        df.to_excel(writer, sheet_name=f"Page{i+1}_Table{j+1}", index=False)
     output.seek(0)
     return output

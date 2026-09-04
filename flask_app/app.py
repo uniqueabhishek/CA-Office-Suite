@@ -7,13 +7,19 @@ import os
 import sys
 import uuid
 import traceback
-from flask import Flask, render_template, request, send_file, flash, redirect, url_for, session  # pylint: disable=import-error
-from werkzeug.utils import secure_filename  # pylint: disable=import-error
-import utils
-from blueprints.balance_sheet import balance_sheet_bp
 
-# Ensure core is reachable
-sys.path.append(os.path.join(os.path.dirname(__file__)))
+# The shared core/ and config/ packages live at the repository root, one level
+# above this file. Put the root on sys.path before importing anything that
+# depends on them (utils, blueprints).
+_REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if _REPO_ROOT not in sys.path:
+    sys.path.insert(0, _REPO_ROOT)
+
+from flask import Flask, render_template, request, send_file, flash, redirect, url_for, session  # noqa: E402
+from werkzeug.utils import secure_filename  # noqa: E402
+
+import utils  # noqa: E402
+from blueprints.balance_sheet import balance_sheet_bp  # noqa: E402
 
 
 app = Flask(__name__)

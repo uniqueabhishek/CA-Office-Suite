@@ -1,8 +1,12 @@
+"""
+DataFrame cleaning and formatting transformations.
+
+Shared by the desktop Excel Formatter and the Flask web formatter so both
+apply identical rules. Contains no UI or threading dependencies.
+"""
 
 import pandas as pd
 
-# Extracted from excel_formatter_tool.py without modification
-# (Except removing PyQT/Thread dependencies)
 
 def detect_and_convert_numbers(df):
     """

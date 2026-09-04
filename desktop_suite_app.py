@@ -12,6 +12,8 @@ from PyQt5.QtWidgets import (
 from PyQt5.QtGui import QFont
 from PyQt5.QtCore import Qt
 
+from config.constants import WINDOW_HEIGHT, WINDOW_WIDTH
+
 # Import our tools as widgets
 try:
     from pdf_to_excel_pro_tool import PDFTableExtractor
@@ -226,7 +228,7 @@ class DesktopSuiteApp(QMainWindow):
         self.setWindowTitle("CA Firm Office Suite - Desktop")
 
         # Set initial window size that fits laptop screens and allows maximizing
-        self.resize(1050, 650)
+        self.resize(WINDOW_WIDTH, WINDOW_HEIGHT)
 
         # Setup Theme
         QApplication.setStyle(QStyleFactory.create("Fusion"))
