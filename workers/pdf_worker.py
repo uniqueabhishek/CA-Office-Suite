@@ -1,11 +1,89 @@
 """
-PDF extraction worker for background processing.
+PDF extraction workers for background processing.
 
-Handles PDF table extraction in a separate thread to keep UI responsive.
+Handles PDF table detection and export in separate threads to keep the UI
+responsive. PDFExtractWorker scans a PDF for tables; PDFWorker writes the
+selected tables to an Excel workbook.
 """
 
 import pandas as pd
+import pdfplumber
+from PyQt5.QtCore import pyqtSignal
+
 from workers.base_worker import BaseWorker
+
+
+class PDFExtractWorker(BaseWorker):
+    """
+    Background worker that scans a PDF and extracts every table it finds.
+
+    pdfplumber's page parsing is slow enough to freeze the UI on large PDFs,
+    so it runs here instead of on the GUI thread.
+
+    Args:
+        pdf_path (str): Path to the PDF file to scan
+        parent (QObject, optional): Parent object
+
+    Signals:
+        tables_ready (object): Emitted with the list of (page_num, table_num, df)
+        progress_update: Emitted with (progress_value, message)
+        finished: Emitted with (success, message) when complete
+
+    Example:
+        >>> worker = PDFExtractWorker(pdf_path)
+        >>> worker.tables_ready.connect(self.on_tables_ready)
+        >>> worker.start()
+    """
+
+    tables_ready = pyqtSignal(object)  # list of (page_num, table_num, DataFrame)
+
+    def __init__(self, pdf_path, parent=None):
+        """Initialize PDF scanning worker."""
+        super().__init__(parent)
+        self.pdf_path = pdf_path
+
+    def run(self):
+        """
+        Scan the PDF for tables in a background thread.
+
+        This method runs in a separate thread and should not be called directly.
+        Use start() to begin execution.
+        """
+        try:
+            tables = []
+            with pdfplumber.open(self.pdf_path) as pdf:
+                total_pages = len(pdf.pages)
+                # Page count is only known once the PDF is open, so progress is
+                # reported as a percentage against a fixed 0-100 scale.
+                self.emit_progress(0, 100, f"Scanning {total_pages} pages...")
+
+                for i, page in enumerate(pdf.pages):
+                    if self.is_cancelled:
+                        self.finished.emit(False, "PDF scan cancelled by user")
+                        return
+
+                    for j, table in enumerate(page.extract_tables()):
+                        if table:
+                            df = pd.DataFrame(table[1:], columns=table[0])
+                            tables.append((i + 1, j + 1, df))
+
+                    self.emit_progress(
+                        int((i + 1) / total_pages * 100),
+                        100,
+                        f"Scanned page {i + 1}/{total_pages} - {len(tables)} tables so far"
+                    )
+
+            self.tables_ready.emit(tables)
+
+            if not tables:
+                self.finished.emit(False, "No tables found in this PDF.")
+            else:
+                self.finished.emit(True, f"Found {len(tables)} tables.")
+
+        except Exception as e:  # pylint: disable=broad-except
+            self.emit_error(e, "PDF scan failed")
+            self.tables_ready.emit([])
+            self.finished.emit(False, f"Error: {str(e)}")
 
 
 class PDFWorker(BaseWorker):

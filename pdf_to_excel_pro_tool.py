@@ -1,6 +1,4 @@
 import os
-import pdfplumber
-import pandas as pd
 from PyQt5.QtWidgets import (
     QLabel,
     QPushButton,
@@ -16,19 +14,21 @@ from PyQt5.QtWidgets import (
 )
 from PyQt5.QtCore import Qt
 
+from ui.components import ProgressLogger
+from workers.pdf_worker import PDFExtractWorker, PDFWorker
+
 
 class PDFTableExtractor(QWidget):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("PDF to Excel PRO Tool")
-        # self.resize(1600, 800)
         self.checkboxes = []
+        self.tables = []
+        self.pdf_path = None
+        self.worker = None  # Background scan/export thread
         self.setup_ui()
 
     def setup_ui(self):
-        # main_widget = QWidget()
-        # self.setCentralWidget(main_widget)
-
         main_layout = QVBoxLayout(self)
 
         # Top section with label and buttons
@@ -54,6 +54,12 @@ class PDFTableExtractor(QWidget):
         top_layout.addWidget(self.convert_btn)
         self.convert_btn.setMaximumWidth(160)
 
+        self.cancel_btn = QPushButton("Cancel")
+        self.cancel_btn.clicked.connect(self.cancel_processing)
+        self.cancel_btn.setEnabled(False)
+        top_layout.addWidget(self.cancel_btn)
+        self.cancel_btn.setMaximumWidth(100)
+
         main_layout.addLayout(top_layout)
 
         # Scroll area
@@ -66,6 +72,10 @@ class PDFTableExtractor(QWidget):
         self.scroll_area.setWidget(self.scroll_widget)
         main_layout.addWidget(self.scroll_area)
 
+        # Progress bar and log
+        self.progress_logger = ProgressLogger(log_height=120)
+        main_layout.addWidget(self.progress_logger)
+
     def select_pdf(self):
         file_path, _ = QFileDialog.getOpenFileName(
             self, "Open PDF", "", "PDF Files (*.pdf)"
@@ -73,18 +83,32 @@ class PDFTableExtractor(QWidget):
         if file_path:
             self.pdf_path = file_path
             self.label.setText(f"Selected: {os.path.basename(file_path)}")
-            self.convert_btn.setEnabled(True)
+            self.convert_btn.setEnabled(False)
             self.preview_tables()
 
     def preview_tables(self):
+        """
+        Scan the selected PDF in a background thread so the UI stays responsive.
+        """
         self.clear_preview()
-        self.tables = self.extract_tables(self.pdf_path)
-        if not self.tables:
-            QMessageBox.information(self, "No Tables",
-                                    "No tables found in this PDF.")
-            return
+        self.tables = []
 
-        for idx, (page_num, table_num, df) in enumerate(self.tables):
+        self.select_btn.setEnabled(False)
+        self.cancel_btn.setEnabled(True)
+        self.progress_logger.clear()
+        self.progress_logger.set_max_progress(100)  # Scan reports percentages
+        self.progress_logger.log(f"Scanning {os.path.basename(self.pdf_path)}...")
+
+        self.worker = PDFExtractWorker(self.pdf_path, self)
+        self.worker.progress_update.connect(self.on_progress_update)
+        self.worker.tables_ready.connect(self.on_tables_ready)
+        self.worker.finished.connect(self.on_scan_finished)
+        self.worker.start()
+
+    def on_tables_ready(self, tables):
+        """Slot receiving extracted tables from the scan worker."""
+        self.tables = tables
+        for page_num, table_num, df in self.tables:
             checkbox = QCheckBox(f"Page {page_num} - Table {table_num}")
             checkbox.setChecked(True)
             self.checkboxes.append(checkbox)
@@ -94,6 +118,17 @@ class PDFTableExtractor(QWidget):
             preview.setReadOnly(True)
             preview.setText(df.to_string(index=False))
             self.scroll_layout.addWidget(preview)
+
+    def on_scan_finished(self, success, message):
+        """Slot handling completion of the background PDF scan."""
+        self.select_btn.setEnabled(True)
+        self.cancel_btn.setEnabled(False)
+        self.convert_btn.setEnabled(bool(self.tables))
+        self._release_worker()
+
+        self.progress_logger.log(message)
+        if not success and not self.tables:
+            QMessageBox.information(self, "No Tables", message)
 
     def clear_preview(self):
         for i in reversed(range(self.scroll_layout.count())):
@@ -105,49 +140,65 @@ class PDFTableExtractor(QWidget):
         self.checkboxes.clear()
 
     def convert_to_excel(self):
-        try:
-            selected_tables = [
-                tbl for tbl, chk in zip(self.tables, self.checkboxes)
-                if chk.isChecked()
-            ]
-            if not selected_tables:
-                QMessageBox.information(
-                    self,
-                    "No Selection",
-                    "Please select at least one table to export.",
-                )
-                return
-
-            base_name = os.path.splitext(os.path.basename(self.pdf_path))[0]
-            output_path = os.path.join(
-                os.path.dirname(self.pdf_path), base_name + ".xlsx"
-            )
-
-            # Save tables directly
-            self.save_tables_to_excel(selected_tables, output_path)
-
+        """
+        Export the checked tables to Excel in a background thread.
+        """
+        selected_tables = [
+            tbl for tbl, chk in zip(self.tables, self.checkboxes)
+            if chk.isChecked()
+        ]
+        if not selected_tables:
             QMessageBox.information(
                 self,
-                "Success",
-                f"Excel file created successfully at:\n{output_path}"
+                "No Selection",
+                "Please select at least one table to export.",
             )
+            return
 
-        except Exception as e:
-            QMessageBox.critical(self, "Error", str(e))
+        base_name = os.path.splitext(os.path.basename(self.pdf_path))[0]
+        output_path = os.path.join(
+            os.path.dirname(self.pdf_path), base_name + ".xlsx"
+        )
 
-    def extract_tables(self, pdf_path):
-        tables = []
-        with pdfplumber.open(pdf_path) as pdf:
-            for i, page in enumerate(pdf.pages):
-                page_tables = page.extract_tables()
-                for j, table in enumerate(page_tables):
-                    if table:
-                        df = pd.DataFrame(table[1:], columns=table[0])
-                        tables.append((i + 1, j + 1, df))
-        return tables
+        self.select_btn.setEnabled(False)
+        self.convert_btn.setEnabled(False)
+        self.cancel_btn.setEnabled(True)
 
-    def save_tables_to_excel(self, tables, output_path):
-        with pd.ExcelWriter(output_path, engine="openpyxl") as writer:
-            for page_num, table_num, df in tables:
-                sheet_name = f"Page{page_num}_Table{table_num}"
-                df.to_excel(writer, sheet_name=sheet_name, index=False)
+        self.progress_logger.set_max_progress(len(selected_tables))
+        self.progress_logger.set_progress(0)
+
+        self.worker = PDFWorker(self.pdf_path, selected_tables, output_path, self)
+        self.worker.progress_update.connect(self.on_progress_update)
+        self.worker.finished.connect(self.on_export_finished)
+        self.worker.start()
+
+    def on_progress_update(self, progress_value, message):
+        """Slot to handle progress updates from a worker thread."""
+        self.progress_logger.set_progress(progress_value)
+        self.progress_logger.log(message)
+
+    def on_export_finished(self, success, message):
+        """Slot handling completion of the background Excel export."""
+        self.select_btn.setEnabled(True)
+        self.convert_btn.setEnabled(True)
+        self.cancel_btn.setEnabled(False)
+        self._release_worker()
+
+        self.progress_logger.log(message)
+        if success:
+            QMessageBox.information(self, "Success", message)
+        else:
+            QMessageBox.critical(self, "Error", message)
+
+    def cancel_processing(self):
+        """Cancel the running background operation."""
+        if self.worker is not None and self.worker.isRunning():
+            self.progress_logger.log("Cancellation requested...")
+            self.worker.cancel()
+            self.cancel_btn.setEnabled(False)  # Prevent double-click
+
+    def _release_worker(self):
+        """Detach and schedule deletion of the finished worker."""
+        if self.worker is not None:
+            self.worker.deleteLater()
+            self.worker = None
