@@ -49,13 +49,19 @@ class BaseWorker(QThread):
         """
         self.is_cancelled = True
 
-    def emit_progress(self, current, total, message):
+    def emit_progress(self, current, total, message):  # pylint: disable=unused-argument
         """
         Helper method to emit progress updates.
 
+        The scale is not transmitted: each tool calls
+        ProgressLogger.set_max_progress() itself before starting a worker, so
+        the bar already knows the total and only needs the current value.
+        'total' is kept because it makes the call sites state the scale the
+        emitted value belongs to, which is what has to match that maximum.
+
         Args:
-            current (int): Current progress value
-            total (int): Total items to process
+            current (int): Current progress value, on the scale of 'total'
+            total (int): Total items to process, for the reader's benefit
             message (str): Progress message to display
 
         Example:

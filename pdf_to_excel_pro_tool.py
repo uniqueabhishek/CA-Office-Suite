@@ -41,8 +41,7 @@ class PDFTableExtractor(QWidget):
         # Turn QLabel into a framed box
         self.label.setFrameShape(QFrame.Box)  # Box frame
 
-        self.label.setStyleSheet("border: 1px solid grey; " "padding: 3px;")
-        # Border and padding
+        self.label.setStyleSheet("border: 1px solid grey; padding: 3px;")
 
         self.select_btn = QPushButton("Select PDF")
         self.select_btn.clicked.connect(self.select_pdf)

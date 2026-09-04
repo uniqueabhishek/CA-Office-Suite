@@ -272,7 +272,8 @@ class ExcelCleanerWindow(QWidget):
         path = item.text()
         try:
             df = read_file_to_df(path)
-        except Exception as e:
+        except Exception as e:  # pylint: disable=broad-except
+            # Any unreadable file becomes a dialog rather than a crashed preview.
             QMessageBox.critical(self, "Read Error", f"Failed to read {path}\n{e}")
             return
 
@@ -283,9 +284,13 @@ class ExcelCleanerWindow(QWidget):
         if self.chk_trim.isChecked():
             df_preview = trim_whitespace(df_preview)
         if self.chk_numbers.isChecked():
-            df_preview, conversions = detect_and_convert_numbers(df_preview)
+            # The preview only shows the values; which columns were converted
+            # is reported on the batch run, not here.
+            df_preview, _conversions = detect_and_convert_numbers(df_preview)
         if self.chk_dates.isChecked():
-            df_preview, conv = normalize_dates(df_preview, target_format=self.date_format_combo.currentText())
+            df_preview, _date_conversions = normalize_dates(
+                df_preview, target_format=self.date_format_combo.currentText()
+            )
         if self.chk_text_case.isChecked():
             sel = self.text_case_combo.currentText()
             case_map = {
@@ -301,7 +306,9 @@ class ExcelCleanerWindow(QWidget):
             nf_opt = self.num_format_combo.currentText()
             nf_key = "2_decimals" if "2" in nf_opt else ("no_decimals" if "no" in nf_opt.lower() else "currency")
             cur_sym = self.currency_input.text().strip() or DEFAULT_CURRENCY_SYMBOL
-            df_preview, nf_map = apply_number_formatting(df_preview, option=nf_key, currency_symbol=cur_sym)
+            # The number format map targets openpyxl cells, which the Qt table
+            # preview does not have; only the rounded values are shown.
+            df_preview, _nf_map = apply_number_formatting(df_preview, option=nf_key, currency_symbol=cur_sym)
 
         self.show_dataframe_in_table(df_preview.head(MAX_PREVIEW_ROWS))
         self.preview_label.setText(f"Preview: {os.path.basename(path)} (first {MAX_PREVIEW_ROWS} rows)")
@@ -313,7 +320,7 @@ class ExcelCleanerWindow(QWidget):
         self.table.setRowCount(rows)
         self.table.setHorizontalHeaderLabels(list(df.columns))
         for i in range(rows):
-            for j, col in enumerate(df.columns):
+            for j in range(cols):
                 val = df.iloc[i, j]
                 if pd.isna(val):
                     text = ""

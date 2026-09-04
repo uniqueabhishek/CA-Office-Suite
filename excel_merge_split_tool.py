@@ -222,7 +222,8 @@ class ExcelMergeSplitWindow(QWidget):
                         out_path = os.path.join(self.output_folder, out_name)
                         save_df_to_excel(df, out_path, sheet_name=safe_sheet[:MAX_SHEET_NAME_LENGTH])
                         self.progress_logger.log(f"  Saved sheet: {out_path}")
-                except Exception as e:
+                except Exception as e:  # pylint: disable=broad-except
+                    # One bad file is logged and skipped so the split continues.
                     self.progress_logger.log(f"Failed to split {file_path}: {e}")
                 self.progress_logger.set_progress(idx)
 

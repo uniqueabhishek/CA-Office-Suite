@@ -88,7 +88,8 @@ class MergeWorker(BaseWorker):
                     colsets.append(tuple(df.columns))
                     sheetmaps[file_path] = sheets
 
-                except Exception as e:
+                except Exception as e:  # pylint: disable=broad-except
+                    # One unreadable file is skipped so the merge continues.
                     self.emit_progress(idx, total_files, f"Skipped {file_path}: {str(e)}")
                     continue
 
@@ -154,7 +155,8 @@ class MergeWorker(BaseWorker):
             # Success!
             self.finished.emit(True, f"Successfully merged {len(dfs)} files into {self.output_path}")
 
-        except Exception as e:
-            # Handle any errors
+        except Exception as e:  # pylint: disable=broad-except
+            # Last guard in a QThread body: an escaping exception would kill the
+            # thread with no signal emitted, leaving the UI waiting forever.
             self.emit_error(e, "Merge operation failed")
             self.finished.emit(False, f"Error: {str(e)}")

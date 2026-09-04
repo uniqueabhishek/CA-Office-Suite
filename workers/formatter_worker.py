@@ -74,7 +74,8 @@ class FormatterWorker(BaseWorker):
 
                     for sheetname, df in sheets.items():
                         # Apply all transformations using optimized pipeline
-                        df_proc, conversions, nf_map = self.apply_transformations_func(df, self.options)
+                        # Which columns were converted is not reported per sheet.
+                        df_proc, _conversions, nf_map = self.apply_transformations_func(df, self.options)
                         processed_sheets[sheetname] = (df_proc, nf_map)
 
                     # Save processed result(s)
@@ -167,7 +168,8 @@ class FormatterWorker(BaseWorker):
                             wb.save(file_path)
                             self.progress_update.emit(idx, f"Overwrote workbook: {file_path}")
 
-                except Exception as e:
+                except Exception as e:  # pylint: disable=broad-except
+                    # One bad file is logged and skipped so the batch continues.
                     error_msg = f"Error processing {file_path}: {e}"
                     self.progress_update.emit(idx, error_msg)
                     self.progress_update.emit(idx, f"Traceback:\n{traceback.format_exc()}")
@@ -175,6 +177,7 @@ class FormatterWorker(BaseWorker):
             # All files processed successfully
             self.finished.emit(True, f"All {total} files processed successfully.")
 
-        except Exception as e:
-            # Unexpected error in thread
+        except Exception as e:  # pylint: disable=broad-except
+            # Last guard in a QThread body: an escaping exception would kill the
+            # thread with no signal emitted, leaving the UI waiting forever.
             self.finished.emit(False, f"Unexpected error: {e}\n{traceback.format_exc()}")
