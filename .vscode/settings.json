@@ -2,5 +2,21 @@
     // uv owns this environment: dependencies come from pyproject.toml + uv.lock.
     // Install with `uv sync` / `uv add` from a terminal, never through an
     // editor "install package" UI, which would bypass the lockfile.
-    "python.defaultInterpreterPath": "${workspaceFolder}/.venv/Scripts/python.exe"
+    "python.defaultInterpreterPath": "${workspaceFolder}/.venv/Scripts/python.exe",
+
+    // flask_app/ is a flat import root, not a package: app.py and utils.py
+    // import each other by bare name and gunicorn runs with --chdir flask_app.
+    // Mirrors mypy_path in pyproject.toml so the editor resolves those imports
+    // the same way the type checker and the deployed app do.
+    "python.analysis.extraPaths": [
+        "${workspaceFolder}/flask_app"
+    ],
+
+    // PyQt5 ships compiled modules (QtCore.pyd) beside their stubs (QtCore.pyi),
+    // so there is no .py for Pylance to read and it warns on every Qt import.
+    // The stubs are what type checking should use anyway, and the imports do
+    // resolve, so the warning reports nothing actionable.
+    "python.analysis.diagnosticSeverityOverrides": {
+        "reportMissingModuleSource": "none"
+    }
 }
