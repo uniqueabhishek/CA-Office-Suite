@@ -95,3 +95,37 @@ class TestMergeFilesLogic:
         ws = load_workbook(out)["Merged"]
         assert all(c.font.bold for c in ws[1])
         assert ws.column_dimensions["A"].width
+
+    def test_a_completed_merge_reports_true(self, same_shape_files, tmp_path):
+        out = os.path.join(tmp_path, "merged.xlsx")
+        assert merge_files_logic(same_shape_files, out) is True
+
+
+class TestWorkerHooks:
+    """The progress and cancellation hooks MergeWorker drives this logic with."""
+
+    def test_progress_is_reported_per_file(self, same_shape_files, tmp_path):
+        seen = []
+        out = os.path.join(tmp_path, "merged.xlsx")
+        merge_files_logic(
+            same_shape_files,
+            out,
+            on_progress=lambda done, total, message: seen.append((done, total, message)),
+        )
+
+        assert [done for done, _, _ in seen][:2] == [1, 2]
+        assert all(total == len(same_shape_files) for _, total, _ in seen)
+
+    def test_cancelling_writes_nothing(self, same_shape_files, tmp_path):
+        out = os.path.join(tmp_path, "merged.xlsx")
+
+        assert merge_files_logic(same_shape_files, out, should_cancel=lambda: True) is False
+        assert not os.path.exists(out)
+
+    def test_formatting_can_be_skipped(self, different_shape_files, tmp_path):
+        """MergeWorker's apply_formatting flag used to be accepted and ignored."""
+        out = os.path.join(tmp_path, "merged.xlsx")
+        merge_files_logic(different_shape_files, out, apply_formatting=False)
+
+        wb = load_workbook(out)
+        assert not any(c.font.bold for c in wb[wb.sheetnames[0]][1])
