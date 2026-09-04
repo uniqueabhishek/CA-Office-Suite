@@ -10,6 +10,7 @@ import pandas as pd
 import pdfplumber
 from PyQt5.QtCore import pyqtSignal
 
+from core.excel_utils import dedupe_headers
 from workers.base_worker import BaseWorker
 
 
@@ -69,7 +70,7 @@ class PDFExtractWorker(BaseWorker):
 
                     for j, table in enumerate(page.extract_tables()):
                         if table:
-                            df = pd.DataFrame(table[1:], columns=table[0])
+                            df = pd.DataFrame(table[1:], columns=dedupe_headers(table[0]))
                             tables.append((i + 1, j + 1, df))
 
                     self.emit_progress(

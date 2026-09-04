@@ -31,6 +31,35 @@ def safe_name(name):
     return _UNSAFE_NAME_CHARS.sub("_", str(name)).strip() or "Sheet"
 
 
+def dedupe_headers(header_row):
+    """
+    Turn a raw table header row into unique, non-empty column names.
+
+    Header cells extracted from a PDF are often blank or repeated, and may be
+    None. pandas accepts all three, so the mismatch only shows up later: the
+    web preview has always de-duplicated its headers while the export and the
+    desktop scan passed the raw row straight through, producing workbooks with
+    duplicate or empty columns.
+
+    Args:
+        header_row (list): Raw first row of an extracted table
+
+    Returns:
+        list: Column names, repeats suffixed '.1', '.2', and so on
+    """
+    seen: dict[str, int] = {}
+    headers = []
+    for col in header_row:
+        name = str(col).strip() if col else ""
+        if name in seen:
+            seen[name] += 1
+            headers.append(f"{name}.{seen[name]}")
+        else:
+            seen[name] = 0
+            headers.append(name)
+    return headers
+
+
 def _engine_for(ext):
     """
     Pick the pandas Excel engine for a file extension.

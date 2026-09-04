@@ -15,7 +15,7 @@ import pdfplumber
 from openpyxl import load_workbook
 
 from config.constants import MAX_SHEET_NAME_LENGTH
-from core.excel_utils import read_all_sheets, safe_name
+from core.excel_utils import dedupe_headers, read_all_sheets, safe_name
 from core.excel_writer import apply_formatting_to_worksheet
 from core.merge_logic import merge_files_logic
 from core.transformations import apply_all_transformations
@@ -143,18 +143,7 @@ def extract_tables_from_pdf(pdf_path):
             page_tables = page.extract_tables()
             for j, table in enumerate(page_tables):
                 if table:
-                    headers = table[0]
-                    seen = {}
-                    new_headers = []
-                    for col in headers:
-                        col = str(col).strip() if col else ""
-                        if col in seen:
-                            seen[col] += 1
-                            new_headers.append(f"{col}.{seen[col]}")
-                        else:
-                            seen[col] = 0
-                            new_headers.append(col)
-                    df = pd.DataFrame(table[1:], columns=new_headers)
+                    df = pd.DataFrame(table[1:], columns=dedupe_headers(table[0]))
 
                     tables.append(
                         {
@@ -176,7 +165,13 @@ def convert_selected_tables_to_excel(pdf_path, selected_indices):
                 page_tables = page.extract_tables()
                 for j, table in enumerate(page_tables):
                     if f"{i+1}-{j+1}" in selected_indices and table:
-                        df = pd.DataFrame(table[1:], columns=table[0]) if len(table) > 1 else pd.DataFrame(table)
+                        # Same header handling the preview uses, so the exported
+                        # workbook matches what the user selected on screen.
+                        df = (
+                            pd.DataFrame(table[1:], columns=dedupe_headers(table[0]))
+                            if len(table) > 1
+                            else pd.DataFrame(table)
+                        )
                         df.to_excel(writer, sheet_name=f"Page{i+1}_Table{j+1}", index=False)
     output.seek(0)
     return output

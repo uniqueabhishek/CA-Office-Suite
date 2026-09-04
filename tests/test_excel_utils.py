@@ -6,7 +6,29 @@ import os
 
 import pandas as pd
 
-from core.excel_utils import list_excel_files_in_folder, read_all_sheets, read_file_to_df, safe_name
+from core.excel_utils import dedupe_headers, list_excel_files_in_folder, read_all_sheets, read_file_to_df, safe_name
+
+
+class TestDedupeHeaders:
+    """Regression: only the web preview de-duplicated headers, not the exports."""
+
+    def test_unique_headers_are_untouched(self):
+        assert dedupe_headers(["Name", "Amount"]) == ["Name", "Amount"]
+
+    def test_repeats_get_a_numeric_suffix(self):
+        assert dedupe_headers(["Amount", "Amount", "Amount"]) == ["Amount", "Amount.1", "Amount.2"]
+
+    def test_none_cells_become_empty_strings(self):
+        assert dedupe_headers([None, "Name"]) == ["", "Name"]
+
+    def test_repeated_blank_cells_are_still_distinct(self):
+        assert dedupe_headers([None, None]) == ["", ".1"]
+
+    def test_surrounding_whitespace_is_stripped(self):
+        assert dedupe_headers(["  Name  "]) == ["Name"]
+
+    def test_non_string_cells_are_coerced(self):
+        assert dedupe_headers([2024]) == ["2024"]
 
 
 class TestSafeName:
