@@ -1,5 +1,11 @@
+"""
+HTTP client for TallyPrime / Tally.ERP 9.
+"""
+
 import requests
-from . import tally_templates
+
+from tally_api import tally_templates
+
 
 class TallyClient:
     """
