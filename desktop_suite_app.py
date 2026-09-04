@@ -1,36 +1,39 @@
 import sys
+
+from PyQt5.QtCore import Qt
+from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import (
     QApplication,
+    QLabel,
     QMainWindow,
+    QScrollArea,
+    QStyleFactory,
     QTabWidget,
     QVBoxLayout,
     QWidget,
-    QLabel,
-    QStyleFactory,
-    QScrollArea
 )
-from PyQt5.QtGui import QFont
-from PyQt5.QtCore import Qt
 
 from config.constants import WINDOW_HEIGHT, WINDOW_WIDTH
 
-# Import our tools as widgets
+# Import our tools as widgets. A tool whose dependencies are missing degrades to
+# None and its tab is skipped, so the suite still opens; the type: ignore marks
+# rebinding an imported class to None, which mypy rejects but is the point here.
 try:
     from pdf_to_excel_pro_tool import PDFTableExtractor
 except ImportError as e:
-    PDFTableExtractor = None
+    PDFTableExtractor = None  # type: ignore[assignment,misc]
     print(f"Warning: PDF tool failed to load: {e}")
 
 try:
     from excel_formatter_tool import ExcelCleanerWindow
 except ImportError as e:
-    ExcelCleanerWindow = None
+    ExcelCleanerWindow = None  # type: ignore[assignment,misc]
     print(f"Warning: Excel Formatter tool failed to load: {e}")
 
 try:
     from excel_merge_split_tool import ExcelMergeSplitWindow
 except ImportError as e:
-    ExcelMergeSplitWindow = None
+    ExcelMergeSplitWindow = None  # type: ignore[assignment,misc]
     print(f"Warning: Merge & Split tool failed to load: {e}")
 
 # Modern Office Professional Theme
